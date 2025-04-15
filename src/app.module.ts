@@ -8,6 +8,6 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 @Module({
   imports: [UserModule, DatabaseModule],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService],
 })
 export class AppModule {}
