@@ -36,6 +36,7 @@ import { RecordModule } from './record/record.module';
         database: config.get('DB_DATABASE'),
         autoLoadEntities: true,
         synchronize: true,
+        
       }),
     }),
     UserModule,
