@@ -6,33 +6,33 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+
 @Controller('records')
 export class RecordController {
-  constructor(private readonly recordService: RecordService) {}
+  constructor(private readonly recordService: RecordService) { }
 
   @Post()
   @Roles('A', 'M')
   create(@Body() dto: CreateRecordDto) {
     return this.recordService.create(dto);
   }
-
+  @UseGuards(RolesGuard)
   @Get()
   findAll() {
     return this.recordService.findAll();
   }
-
+  @UseGuards(RolesGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.recordService.findOne(+id);
   }
-
+  @UseGuards(RolesGuard)
   @Patch(':id')
   @Roles('M')
   update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     return this.recordService.update(+id, dto);
   }
-
+  @UseGuards(RolesGuard)
   @Delete(':id')
   @Roles('M')
   remove(@Param('id') id: string) {
