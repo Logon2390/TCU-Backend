@@ -19,4 +19,10 @@ export class Admin {
 
   @Column()
   accessCode: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  resetToken: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  resetTokenExpiry: Date | null;
 }
