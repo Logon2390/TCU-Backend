@@ -12,27 +12,26 @@ export class RecordController {
   constructor(private readonly recordService: RecordService) { }
 
   @Post()
-  @Roles('A', 'M')
   create(@Body() dto: CreateRecordDto) {
     return this.recordService.create(dto);
   }
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Get()
   findAll() {
     return this.recordService.findAll();
   }
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.recordService.findOne(+id);
   }
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Patch(':id')
   @Roles('M')
   update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     return this.recordService.update(+id, dto);
   }
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Delete(':id')
   @Roles('M')
   remove(@Param('id') id: string) {
