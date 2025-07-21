@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Put,Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put,Res, BadRequestException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { LoginAdminDto } from './dto/login-admin.dto';
@@ -20,13 +20,27 @@ export class AdminController {
 
   @Put(':id')
   update(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
-    return this.adminService.update(+id, dto);
+    const numId = +id;
+    if (isNaN(numId)) {
+      throw new BadRequestException('ID inválido');
+    }
+    return this.adminService.update(numId, dto);
   }
 
 
   @Post('login')
   login(@Body() dto: LoginAdminDto, @Res({ passthrough: true }) res: Response) {
     return this.adminService.login(dto, res);
+  }
+
+  @Post('requestReset')
+  requestPasswordReset(@Body() body: { email: string }) {
+    return this.adminService.sendResetEmail(body.email);
+  }            
+             
+  @Post('resetPassword')
+  resetPassword(@Body() body: { token: string; newPassword: string }) {
+    return this.adminService.resetPassword(body.token, body.newPassword);
   }
 
   @Get()
@@ -38,11 +52,19 @@ export class AdminController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.adminService.findOne(+id);
+    const numId = +id;
+    if (isNaN(numId)) {
+      throw new BadRequestException('ID inválido');
+    }
+    return this.adminService.findOne(numId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.adminService.remove(+id);
+    const numId = +id;
+    if (isNaN(numId)) {
+      throw new BadRequestException('ID inválido');
+    }
+    return this.adminService.remove(numId);
   }
 }
