@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: tcu-backend
+    restart: unless-stopped
+    ports:
+      - '3306:3000'
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - tcu-network
+    volumes:
+      - ./logs:/app/logs
+      - .env:/app/.env
+
+networks:
+  tcu-network:
+    driver: bridge
