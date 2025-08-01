@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Delete, Put,Res, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Res, BadRequestException } from '@nestjs/common';
+import { Response } from 'express';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { LoginAdminDto } from './dto/login-admin.dto';
@@ -7,64 +8,99 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
-import { Response } from 'express';
-
+import { ResponseDTO } from '../common/dto/response.dto';
 @Controller('admins')
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }
 
   @Post()
-  create(@Body() dto: CreateAdminDto) {
-    return this.adminService.create(dto);
+  async create(@Body() dto: CreateAdminDto) {
+    try {
+      const admin = await this.adminService.create(dto);
+      return new ResponseDTO(true, "Admin agregado correctamente", admin);
+    } catch (error) {
+
+      return new ResponseDTO(false, error.message);
+    }
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
-    const numId = +id;
-    if (isNaN(numId)) {
-      throw new BadRequestException('ID inválido');
+  async update(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
+    try {
+      const admin = await this.adminService.update(+id, dto)
+      return new ResponseDTO(true, "Admin actualizado correctamente");
+    } catch (error) {
+
+      return new ResponseDTO(false, error.message);
     }
-    return this.adminService.update(numId, dto);
   }
 
 
   @Post('login')
-  login(@Body() dto: LoginAdminDto, @Res({ passthrough: true }) res: Response) {
-    return this.adminService.login(dto, res);
+  async login(@Body() dto: LoginAdminDto, @Res({ passthrough: true }) res: Response) {
+    try {
+      const result = await this.adminService.login(dto, res);
+      return new ResponseDTO(true, "Login exitoso", result);
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
   }
 
   @Post('requestReset')
-  requestPasswordReset(@Body() body: { email: string }) {
-    return this.adminService.sendResetEmail(body.email);
-  }            
-             
+  async requestPasswordReset(@Body() body: { email: string }) {
+    try {
+      const result = await this.adminService.sendResetEmail(body.email);
+      return new ResponseDTO(true, "Correo de recuperación enviado", result);
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
   @Post('resetPassword')
-  resetPassword(@Body() body: { token: string; newPassword: string }) {
-    return this.adminService.resetPassword(body.token, body.newPassword);
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    try {
+      const result = await this.adminService.resetPassword(body.token, body.newPassword);
+      return new ResponseDTO(true, "Contraseña actualizada exitosamente", result);
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
   }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('M')
-  findAll() {
-    return this.adminService.findAll();
+  async findAll() {
+    try {
+
+      const admins = await this.adminService.findAll();
+      return new ResponseDTO(true, "Admins obtenidos correctamente", admins);
+
+    } catch (error) {
+      return new ResponseDTO(false, error.message)
+    }
+
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    const numId = +id;
-    if (isNaN(numId)) {
-      throw new BadRequestException('ID inválido');
+  async findOne(@Param('id') id: string) {
+    try {
+      const admin = await this.adminService.findOne(+id);
+      if (!admin) new ResponseDTO(true, "Admin no encontrado");
+      return new ResponseDTO(true, "Admin obtenido correctamente");
+    } catch (error) {
+      return new ResponseDTO(false, error.message)
     }
-    return this.adminService.findOne(numId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    const numId = +id;
-    if (isNaN(numId)) {
-      throw new BadRequestException('ID inválido');
+  async remove(@Param('id') id: string) {
+    try {
+      await this.adminService.remove(+id);
+      return new ResponseDTO(true, "Admin eliminado correctamente")
+
+    } catch (error) {
+      return new ResponseDTO(false, error.message)
     }
-    return this.adminService.remove(numId);
+
   }
 }
