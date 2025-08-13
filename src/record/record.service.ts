@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Record } from './record.entity';
@@ -20,25 +24,18 @@ export class RecordService {
 
   async create(dto: CreateRecordDto) {
     // Buscar usuario por documento
-    let user = await this.userRepo.findOneBy({ document: dto.document });
+    let user = await this.userRepo.findOneBy({ document: dto.user.document });
 
     // Si el usuario no existe, crearlo
     if (!user) {
       // Validar que se proporcionen los campos necesarios para crear usuario
-      if (!dto.name || !dto.gender) {
+      if (!dto.user.name || !dto.user.gender) {
         throw new BadRequestException(
-          'Para crear un nuevo usuario, se requieren los campos: name, gender'
+          'Para crear un nuevo usuario, se requieren los campos: name, gender',
         );
       }
 
-      user = this.userRepo.create({
-        document: dto.document,
-        name: dto.name,
-        gender: dto.gender,
-        birthday: dto.birthday,
-        lastRecord: dto.date,
-      });
-
+      user = this.userRepo.create(dto.user);
       user = await this.userRepo.save(user);
     } else {
       // Si el usuario existe, actualizar lastRecord
@@ -98,28 +95,22 @@ export class RecordService {
     if (!record) throw new NotFoundException('Registro no encontrado');
 
     // Si se proporciona un documento, buscar o crear usuario
-    if (dto.document) {
-      let user = await this.userRepo.findOneBy({ document: dto.document });
-      
+    if (dto.user?.document) {
+      let user = await this.userRepo.findOneBy({ document: dto.user.document });
+
       if (!user) {
         // Si el usuario no existe, validar campos necesarios
-        if (!dto.name || !dto.gender) {
+        if (!dto.user?.name || !dto.user?.gender) {
           throw new BadRequestException(
-            'Para crear un nuevo usuario, se requieren los campos: name, gender'
+            'Para crear un nuevo usuario, se requieren los campos: name, gender',
           );
         }
 
-        user = this.userRepo.create({
-          document: dto.document,
-          name: dto.name,
-          gender: dto.gender,
-          birthday: dto.birthday,
-          lastRecord: dto.date || record.date,
-        });
+        user = this.userRepo.create(dto.user);
 
         user = await this.userRepo.save(user);
       }
-      
+
       record.user = user;
     }
 
