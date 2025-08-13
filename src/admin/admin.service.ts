@@ -50,7 +50,7 @@ export class AdminService {
     return this.findOne(id);
   }
 
-  async login(dto: LoginAdminDto, @Res({ passthrough: true }) res: Response) {
+  async login(dto: LoginAdminDto, res: Response) {
     const admin = await this.adminRepo.findOneBy({ email: dto.email });
     if (!admin) throw new UnauthorizedException('Correo no encontrado');
 

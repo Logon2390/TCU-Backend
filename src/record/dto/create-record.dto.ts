@@ -1,12 +1,25 @@
-import { IsDateString, IsInt } from 'class-validator';
+import { IsDateString, IsString, IsOptional, IsEnum } from 'class-validator';
 
 export class CreateRecordDto {
-  @IsInt()
-  userId: number;
+  @IsString()
+  document: string; // Número de cédula del usuario
 
-  @IsInt()
+  @IsString()
   moduleId: number;
 
   @IsDateString()
   date: Date;
+
+  // Campos opcionales para crear usuario si no existe
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsEnum(['F', 'M', 'O'])
+  gender?: 'F' | 'M' | 'O';
+
+  @IsOptional()
+  @IsDateString()
+  birthday?: Date;
 }

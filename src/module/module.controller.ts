@@ -1,41 +1,74 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res } from '@nestjs/common';
 import { ModuleService } from './module.service';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { ResponseDTO } from '../common/dto/response.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('modules')
 export class ModuleController {
-  constructor(private readonly moduleService: ModuleService) {}
+  constructor(private readonly moduleService: ModuleService) { }
 
   @Post()
   @Roles('A', 'M')
-  create(@Body() dto: CreateModuleDto) {
-    return this.moduleService.create(dto);
+  async create(@Body() dto: CreateModuleDto) {
+    try {
+      const module = await this.moduleService.create(dto);
+      return new ResponseDTO(true, "Modulo agregado exitosamente", module)
+    } catch (error) {
+      return new ResponseDTO(false, error.message)
+
+    }
   }
 
   @Get()
-  findAll() {
-    return this.moduleService.findAll();
+  async findAll() {
+    try {
+      const modules = await this.moduleService.findAll();
+      return new ResponseDTO(true, "Modulos obtenidos correctamente", modules);
+
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.moduleService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    try {
+      const module = await this.moduleService.findOne(+id);
+      if (!module) return new ResponseDTO(false, "No se ha encontrado el modulo");
+
+    } catch (error) {
+      return new ResponseDTO(false, error.message)
+
+    }
   }
 
   @Patch(':id')
   @Roles('M')
-  update(@Param('id') id: string, @Body() dto: UpdateModuleDto) {
-    return this.moduleService.update(+id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateModuleDto) {
+    try {
+      const module = await this.moduleService.update(+id, dto);
+      return new ResponseDTO(true, "Modulo actualizado correctamente",module);
+
+    } catch (error) {
+      return new ResponseDTO(false, error.message)
+
+    }
   }
 
   @Delete(':id')
   @Roles('M')
-  remove(@Param('id') id: string) {
-    return this.moduleService.remove(+id);
+  async remove(@Param('id') id: string) {
+    try {
+      await this.moduleService.remove(+id);
+      return new ResponseDTO(true,"Modulo eliminado exitosamente")
+    } catch (error) {
+      return new ResponseDTO(false,error.message);
+    }
   }
 }
