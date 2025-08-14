@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEnum, IsOptional, IsDateString, IsNumber, IsDate } from "class-validator";
+import { IsNotEmpty, IsString, IsEnum, IsOptional, IsDateString, IsNumber } from "class-validator";
 import { CreateUserDto } from "src/user/dto/create-user.dto";
 export class CreateStatsDto {
 
