@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { ModuleService } from './module.service';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
@@ -7,11 +7,12 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ResponseDTO } from '../common/dto/response.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Controller('modules')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @Roles('A', 'M')
   async create(@Body() dto: CreateModuleDto) {
@@ -32,10 +33,10 @@ export class ModuleController {
 
     } catch (error) {
       return new ResponseDTO(false, error.message);
-
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -47,28 +48,29 @@ export class ModuleController {
 
     }
   }
-
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   @Roles('M')
   async update(@Param('id') id: string, @Body() dto: UpdateModuleDto) {
     try {
       const module = await this.moduleService.update(+id, dto);
-      return new ResponseDTO(true, "Modulo actualizado correctamente",module);
+      return new ResponseDTO(true, "Modulo actualizado correctamente", module);
 
     } catch (error) {
       return new ResponseDTO(false, error.message)
 
     }
   }
-
+  
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @Roles('M')
   async remove(@Param('id') id: string) {
     try {
       await this.moduleService.remove(+id);
-      return new ResponseDTO(true,"Modulo eliminado exitosamente")
+      return new ResponseDTO(true, "Modulo eliminado exitosamente")
     } catch (error) {
-      return new ResponseDTO(false,error.message);
+      return new ResponseDTO(false, error.message);
     }
   }
 }
