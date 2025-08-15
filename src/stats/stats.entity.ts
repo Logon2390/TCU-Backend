@@ -1,7 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '../user/user.entity';
 
 @Entity()
+@Index(['entryDateTime', 'userId']) // Índice compuesto para consultas por fecha y usuario
+@Index(['year', 'month']) // Índice para consultas por año/mes
+@Index(['gender', 'age']) // Índice para consultas por género y edad
+@Index(['status', 'entryDateTime']) // Índice para consultas por estado y fecha
 export class Stats {
   // id de la visita
   @PrimaryGeneratedColumn()

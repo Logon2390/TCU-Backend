@@ -1,15 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Stats } from './stats.entity';
-import { CreateStatsDto } from './dto/create-stats.dto';
-import { UpdateStatsDto } from './dto/update-stats.dto';
-import { User } from '../user/user.entity';
-import { VisitHistoryDto } from './dto/visit-history.dto';
+import { Stats } from '../stats.entity';
+import { CreateStatsDto } from '../dto/create-stats.dto';
+import { UpdateStatsDto } from '../dto/update-stats.dto';
+import { User } from '../../user/user.entity';
 
 @Injectable()
-export class StatsService {
-    private readonly logger = new Logger(StatsService.name);
+export class BasicStatsService {
+    private readonly logger = new Logger(BasicStatsService.name);
 
     constructor(
         @InjectRepository(Stats)
@@ -18,30 +17,31 @@ export class StatsService {
         private userRepo: Repository<User>,
     ) {}
 
-    // ==================== OPERACIONES BÁSICAS (CRUD) ====================
-    
+    /**
+     * Crea una nueva estadística
+     */
     async create(createStatsDto: CreateStatsDto): Promise<Stats> {
         // Validar que el usuario existe si se proporciona userId
         if (createStatsDto.userId) {
             const user = await this.userRepo.findOne({ where: { id: createStatsDto.userId } });
             if (!user) {
-                throw new Error(`Usuario con ID ${createStatsDto.userId} no encontrado`);
+                throw new BadRequestException(`Usuario con ID ${createStatsDto.userId} no encontrado`);
             }
         }
 
         // Validar edad
         if (createStatsDto.age < 0 || createStatsDto.age > 120) {
-            throw new Error('La edad debe estar entre 0 y 120 años');
+            throw new BadRequestException('La edad debe estar entre 0 y 120 años');
         }
 
         // Validar género
         if (!['F', 'M', 'O'].includes(createStatsDto.gender)) {
-            throw new Error('El género debe ser F, M u O');
+            throw new BadRequestException('El género debe ser F, M u O');
         }
 
         // Validar estado
-        if (!['registrada', 'anulada'].includes(createStatsDto.status)) {
-            throw new Error('El estado debe ser registrada o anulada');
+        if (!['activo', 'inactivo', 'pendiente'].includes(createStatsDto.status)) {
+            throw new BadRequestException('El estado debe ser activo, inactivo o pendiente');
         }
 
         // Calcular año y mes para optimización de consultas
@@ -62,7 +62,10 @@ export class StatsService {
         return savedStats;
     }
 
-    async findAll(page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene todas las estadísticas con paginación
+     */
+    async findAll(page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             relations: ['user'],
             skip: (page - 1) * limit,
@@ -78,6 +81,9 @@ export class StatsService {
         };
     }
 
+    /**
+     * Obtiene una estadística por ID
+     */
     async findOne(id: number): Promise<Stats> {
         const stats = await this.statsRepo.findOne({
             where: { id },
@@ -85,28 +91,31 @@ export class StatsService {
         });
 
         if (!stats) {
-            throw new Error(`Estadística con ID ${id} no encontrada`);
+            throw new NotFoundException(`Estadística con ID ${id} no encontrada`);
         }
 
         return stats;
     }
 
+    /**
+     * Actualiza una estadística
+     */
     async update(id: number, updateStatsDto: UpdateStatsDto): Promise<Stats> {
         const stats = await this.findOne(id);
 
         // Validar edad si se actualiza
         if (updateStatsDto.age !== undefined && (updateStatsDto.age < 0 || updateStatsDto.age > 120)) {
-            throw new Error('La edad debe estar entre 0 y 120 años');
+            throw new BadRequestException('La edad debe estar entre 0 y 120 años');
         }
 
         // Validar género si se actualiza
         if (updateStatsDto.gender && !['F', 'M', 'O'].includes(updateStatsDto.gender)) {
-            throw new Error('El género debe ser F, M u O');
+            throw new BadRequestException('El género debe ser F, M u O');
         }
 
         // Validar estado si se actualiza
-        if (updateStatsDto.status && !['registrada', 'anulada'].includes(updateStatsDto.status)) {
-            throw new Error('El estado debe ser registrada o anulada');
+        if (updateStatsDto.status && !['activo', 'inactivo', 'pendiente'].includes(updateStatsDto.status)) {
+            throw new BadRequestException('El estado debe ser activo, inactivo o pendiente');
         }
 
         // Actualizar año y mes si se cambia la fecha
@@ -123,15 +132,19 @@ export class StatsService {
         return updatedStats;
     }
 
+    /**
+     * Elimina una estadística
+     */
     async remove(id: number): Promise<void> {
         const stats = await this.findOne(id);
         await this.statsRepo.remove(stats);
         this.logger.log(`Estadística con ID ${id} eliminada`);
     }
 
-    // ==================== CONSULTAS ESPECIALIZADAS ====================
-    
-    async findByUser(userId: number, page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene estadísticas por usuario
+     */
+    async findByUser(userId: number, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { userId },
             relations: ['user'],
@@ -148,13 +161,16 @@ export class StatsService {
         };
     }
 
-    async findByDateRange(startDate: Date, endDate: Date, page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene estadísticas por rango de fechas
+     */
+    async findByDateRange(startDate: Date, endDate: Date, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: {
                 entryDateTime: {
                     $gte: startDate,
                     $lte: endDate
-                } as any
+                }
             },
             relations: ['user'],
             skip: (page - 1) * limit,
@@ -170,9 +186,12 @@ export class StatsService {
         };
     }
 
-    async findByGender(gender: string, page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene estadísticas por género
+     */
+    async findByGender(gender: string, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
-            where: { gender: gender as 'F' | 'M' | 'O' },
+            where: { gender },
             relations: ['user'],
             skip: (page - 1) * limit,
             take: limit,
@@ -187,13 +206,16 @@ export class StatsService {
         };
     }
 
-    async findByAgeRange(minAge: number, maxAge: number, page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene estadísticas por rango de edad
+     */
+    async findByAgeRange(minAge: number, maxAge: number, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: {
                 age: {
                     $gte: minAge,
                     $lte: maxAge
-                } as any
+                }
             },
             relations: ['user'],
             skip: (page - 1) * limit,
@@ -209,9 +231,12 @@ export class StatsService {
         };
     }
 
-    async findByStatus(status: string, page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene estadísticas por estado
+     */
+    async findByStatus(status: string, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
-            where: { status: status as 'registrada' | 'anulada' },
+            where: { status },
             relations: ['user'],
             skip: (page - 1) * limit,
             take: limit,
@@ -226,7 +251,10 @@ export class StatsService {
         };
     }
 
-    async findByYearMonth(year: number, month: number, page: number = 1, limit: number = 20) {
+    /**
+     * Obtiene estadísticas por año y mes
+     */
+    async findByYearMonth(year: number, month: number, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { year, month },
             relations: ['user'],
@@ -240,70 +268,6 @@ export class StatsService {
             total,
             page,
             totalPages: Math.ceil(total / limit)
-        };
-    }
-
-    // ==================== HISTORIAL DE VISITAS ====================
-    
-    async getVisitHistory(dto: VisitHistoryDto) {
-        if (!dto.startDate || !dto.endDate) {
-            throw new Error('Las fechas de inicio y fin son requeridas');
-        }
-
-        const startDate = new Date(dto.startDate);
-        const endDate = new Date(dto.endDate);
-
-        const baseQuery = this.statsRepo.createQueryBuilder('stats')
-            .leftJoinAndSelect('stats.user', 'user')
-            .where('stats.entryDateTime >= :startDate', { startDate })
-            .andWhere('stats.entryDateTime <= :endDate', { endDate });
-
-        // Aplicar filtros adicionales si existen
-        if (dto.userId) {
-            baseQuery.andWhere('stats.userId = :userId', { userId: dto.userId });
-        }
-
-        if (dto.status) {
-            baseQuery.andWhere('stats.status = :status', { status: dto.status });
-        }
-
-        const visits = await baseQuery
-            .orderBy('stats.entryDateTime', 'DESC')
-            .getMany();
-
-        return visits.map(visit => ({
-            id: visit.id,
-            entryDateTime: visit.entryDateTime,
-            userName: visit.user?.name || 'Usuario Desconocido',
-            age: visit.age,
-            gender: visit.gender,
-            status: visit.status
-        }));
-    }
-
-    // ==================== ESTADÍSTICAS RÁPIDAS ====================
-    
-    async getQuickStats() {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const [totalVisits, totalUsers, todayVisits] = await Promise.all([
-            this.statsRepo.count(),
-            this.userRepo.count(),
-            this.statsRepo.count({
-                where: {
-                    entryDateTime: {
-                        $gte: today
-                    } as any
-                }
-            })
-        ]);
-
-        return {
-            totalVisits,
-            totalUsers,
-            todayVisits,
-            lastUpdated: new Date()
         };
     }
 }

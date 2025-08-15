@@ -2,14 +2,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { RolesGuard } from './auth/roles.guard';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 import { ModuleModule } from './module/module.module';
 import { RecordModule } from './record/record.module';
-
+import { StatsModule } from './stats/stats.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -42,6 +40,8 @@ import { RecordModule } from './record/record.module';
     AdminModule,
     ModuleModule,
     RecordModule,
+    StatsModule,
+    ReportsModule,
   ],
    providers: [
     

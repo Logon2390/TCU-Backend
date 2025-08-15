@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put, Query } from '@nestjs/common';
 import { StatsService } from './stats.service';
 import { CreateStatsDto } from './dto/create-stats.dto';
 import { UpdateStatsDto } from './dto/update-stats.dto';
+import { GenerateReportDto } from '../reports/dto/create-report.dto';
+import { VisitHistoryDto } from './dto/visit-history.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -12,6 +14,8 @@ import { ResponseDTO } from '../common/dto/response.dto';
 export class StatsController {
 
     constructor(private readonly statsService: StatsService) { }
+
+    //  ENDPOINTS DE ESTADÍSTICAS 
 
     //endpoint para actualizar una estadistica
     @Put(': id')
@@ -66,9 +70,8 @@ export class StatsController {
     @Roles('M')
     async remove(@Param('id') id: string) {
         try {
-            const deletedStat = await this.statsService.remove(+id);
-            if (!deletedStat) return new ResponseDTO(false, "Estadistica no encontrada");
-            return new ResponseDTO(true, "Estadistica eliminada correctamente", deletedStat);
+            await this.statsService.remove(+id);
+            return new ResponseDTO(true, "Estadistica eliminada correctamente");
         } catch (error) {
             throw new ResponseDTO(false, error.message);
         }
