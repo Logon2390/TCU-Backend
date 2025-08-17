@@ -1,0 +1,58 @@
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { User } from '../user/user.entity';
+
+@Entity()
+@Index(['entryDateTime', 'userId']) // Índice compuesto para consultas por fecha y usuario
+@Index(['year', 'month']) // Índice para consultas por año/mes
+@Index(['gender', 'age']) // Índice para consultas por género y edad
+@Index(['status', 'entryDateTime']) // Índice para consultas por estado y fecha
+export class Stats {
+  // id de la visita
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  // Fecha y hora de entrada/salida completas para poder filtrar por rangos exactos
+  @Column({ type: 'timestamp' })
+  entryDateTime: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  exitDateTime: Date;
+
+  // Género: Femenino, Masculino, Otro
+  @Column({ type: 'enum', enum: ['F', 'M', 'O'] })
+  gender: 'F' | 'M' | 'O';
+
+  // Edad del usuario al momento de la visita
+  @Column({ type: 'int' })
+  age: number;
+
+  // Relación opcional con usuario registrado
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column({ nullable: true })
+  userId: number;
+
+  // notas extras
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  // Estado de la visita
+  @Column({ type: 'enum', enum: ['registrada', 'anulada'], default: 'registrada' })
+  status: 'registrada' | 'anulada';
+
+  // Campos para reportes por año/mes
+  @Column({ type: 'int' })
+  year: number;
+
+  @Column({ type: 'int' })
+  month: number;
+
+  // manejo de fechas
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}

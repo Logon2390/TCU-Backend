@@ -22,7 +22,7 @@ export class MailService {
     async sendResetPassword(to: string, token: string) {
         try {
             const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
-            const resetLink = `${frontendUrl}/user/reset?token=${token}`;
+            const resetLink = `${frontendUrl}/admin/reset?token=${token}`;
             
             // simula envío de email
             console.log('=== EMAIL DE RECUPERACIÓN ===');
