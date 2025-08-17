@@ -18,7 +18,7 @@ export class StatsController {
     //  ENDPOINTS DE ESTADÍSTICAS 
 
     //endpoint para actualizar una estadistica
-    @Put(': id')
+    @Put(':id')
     async update(@Param('id') id: string, @Body() dto: UpdateStatsDto) {
         try {
             const updatedStats = await this.statsService.update(+id, dto);
