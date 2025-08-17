@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Stats } from '../stats.entity';
 import { CreateStatsDto } from '../dto/create-stats.dto';
 import { UpdateStatsDto } from '../dto/update-stats.dto';
 import { User } from '../../user/user.entity';
+import { StatsConfig } from '../stats.config';
 
 @Injectable()
 export class BasicStatsService {
@@ -167,10 +168,7 @@ export class BasicStatsService {
     async findByDateRange(startDate: Date, endDate: Date, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: {
-                entryDateTime: {
-                    $gte: startDate,
-                    $lte: endDate
-                }
+                entryDateTime: Between(startDate, endDate)
             },
             relations: ['user'],
             skip: (page - 1) * limit,
@@ -189,7 +187,7 @@ export class BasicStatsService {
     /**
      * Obtiene estadísticas por género
      */
-    async findByGender(gender: string, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
+    async findByGender(gender: 'F' | 'M' | 'O', page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { gender },
             relations: ['user'],
@@ -212,10 +210,7 @@ export class BasicStatsService {
     async findByAgeRange(minAge: number, maxAge: number, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: {
-                age: {
-                    $gte: minAge,
-                    $lte: maxAge
-                }
+                age: Between(minAge, maxAge)
             },
             relations: ['user'],
             skip: (page - 1) * limit,
@@ -234,7 +229,7 @@ export class BasicStatsService {
     /**
      * Obtiene estadísticas por estado
      */
-    async findByStatus(status: string, page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
+    async findByStatus(status: 'registrada' | 'anulada', page: number = 1, limit: number = 20): Promise<{ data: Stats[]; total: number; page: number; totalPages: number }> {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { status },
             relations: ['user'],

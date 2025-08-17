@@ -39,7 +39,7 @@ export class StatsCacheService {
      */
     has(key: string): boolean {
         const cached = this.cache.get(key);
-        return cached && Date.now() - cached.timestamp < this.CACHE_TTL;
+        return !!(cached && Date.now() - cached.timestamp < this.CACHE_TTL);
     }
 
     /**
