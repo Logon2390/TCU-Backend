@@ -23,6 +23,14 @@ export class UserService {
     return user;
   }
 
+  async findOneByDoc(doc: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ document: doc });
+    if (!user) {
+      throw new Error(`User with document ${doc} not found`);
+    }
+    return user;
+  }
+
   create(data: CreateUserDto): Promise<User> {
     const user = this.userRepository.create(data);
     return this.userRepository.save(user);
