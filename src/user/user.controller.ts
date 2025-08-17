@@ -36,6 +36,7 @@ export class UserController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
 
@@ -50,6 +51,18 @@ export class UserController {
 
   }
 
+  @Get('document/:doc')
+  async findOneByDoc(@Param('doc') doc: string) {
+    try {
+      const user = await this.userService.findOneByDoc(doc);
+      if (!user) return new ResponseDTO(false, "El usuario no existe");
+      return new ResponseDTO(true, "Usuario encontrado", user)
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() dto: CreateUserDto) {
     try {
