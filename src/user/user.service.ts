@@ -37,10 +37,9 @@ export class UserService {
   }
 
   async update(id: number, updateUserDto: Partial<User>): Promise<User> {
-  await this.userRepository.update(id, updateUserDto);
-  return this.findOne(id);
-}
-
+    await this.userRepository.update(id, updateUserDto);
+    return this.findOne(id);
+  }
 
   async remove(id: number): Promise<void> {
     await this.userRepository.delete(id);

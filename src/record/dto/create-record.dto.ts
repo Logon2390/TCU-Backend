@@ -1,11 +1,14 @@
-import { IsDateString, IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsDateString, IsNumber, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { CreateUserDto } from '../../user/dto/create-user.dto';
 
 export class CreateRecordDto {
-  @IsString()
+  @ValidateNested()
+  @Type(() => CreateUserDto)
   user: CreateUserDto;
 
-  @IsString()
+  @IsNumber()
+  @Type(() => Number)
   moduleId: number;
 
   @IsDateString()
