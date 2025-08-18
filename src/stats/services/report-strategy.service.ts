@@ -1,16 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stats } from '../stats.entity';
 import { User } from '../../user/user.entity';
-import { GenerateReportDto } from '../../reports/dto/create-report.dto';
-import { ReportStatistics } from '../interfaces/report-statistics.interface';
 import { StatsConfig } from '../stats.config';
 
 @Injectable()
 export class ReportStrategyService {
-    private readonly logger = new Logger(ReportStrategyService.name);
-
     constructor(
         @InjectRepository(Stats)
         private statsRepo: Repository<Stats>,
@@ -108,3 +104,4 @@ export class ReportStrategyService {
         }
     }
 }
+

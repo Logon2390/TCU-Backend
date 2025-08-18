@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Query, UseGuards, Param } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { GenerateReportDto } from './dto/create-report.dto';
-import { ReportStatistics } from './interfaces/report-statistics.interface';
+import { ReportStatistics } from '../interfaces/report-statistics.interface';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';

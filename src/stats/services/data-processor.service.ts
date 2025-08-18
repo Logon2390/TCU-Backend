@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stats } from '../stats.entity';
 import { User } from '../../user/user.entity';
-import { ReportStatistics } from '../interfaces/report-statistics.interface';
-import { StatsConfig } from '../stats.config';
+import { ReportStatistics } from '../../interfaces/report-statistics.interface';
+
+
 
 @Injectable()
 export class DataProcessorService {
@@ -15,17 +16,17 @@ export class DataProcessorService {
         private statsRepo: Repository<Stats>,
         @InjectRepository(User)
         private userRepo: Repository<User>,
-    ) {}
+    ) { }
 
     /**
      * Procesa datos en lotes para datasets masivos
      */
     async processBatchReport(startDate: Date, endDate: Date, batchSize: number): Promise<ReportStatistics> {
         this.logger.log(`Procesando reporte en lotes de ${batchSize} registros`);
-        
+
         let offset = 0;
         let allStats: Stats[] = [];
-        
+
         while (true) {
             const batch = await this.statsRepo
                 .createQueryBuilder('stats')
@@ -36,15 +37,15 @@ export class DataProcessorService {
                 .skip(offset)
                 .take(batchSize)
                 .getMany();
-            
+
             if (batch.length === 0) break;
-            
+
             allStats = allStats.concat(batch);
             offset += batchSize;
-            
+
             this.logger.log(`Procesados ${offset} registros...`);
         }
-        
+
         return this.calculateStatistics(allStats, startDate, endDate);
     }
 
@@ -153,7 +154,7 @@ export class DataProcessorService {
      */
     async calculateStatistics(stats: Stats[], startDate: Date, endDate: Date): Promise<ReportStatistics> {
         const totalVisits = stats.length;
-        
+
         // Contar usuarios únicos de forma simple
         const userIds = new Set();
         let totalAge = 0;
@@ -164,12 +165,12 @@ export class DataProcessorService {
         for (const stat of stats) {
             if (stat.userId) userIds.add(stat.userId);
             totalAge += stat.age;
-            
+
             // Contar géneros
             if (stat.gender === 'F') fCount++;
             else if (stat.gender === 'M') mCount++;
             else oCount++;
-            
+
             // Contar rangos de edad
             if (stat.age <= 14) infancia++;
             else if (stat.age <= 24) juventud++;
@@ -195,19 +196,19 @@ export class DataProcessorService {
     private groupVisitsByDate(stats: Stats[], startDate: Date, endDate: Date) {
         const visitsByDate: Array<{ date: string; count: number }> = [];
         const currentDate = new Date(startDate);
-        
+
         while (currentDate <= endDate) {
             const dateStr = currentDate.toISOString().split('T')[0];
             let count = 0;
-            
+
             for (const stat of stats) {
                 if (stat.entryDateTime.toISOString().split('T')[0] === dateStr) count++;
             }
-            
+
             visitsByDate.push({ date: dateStr, count });
             currentDate.setDate(currentDate.getDate() + 1);
         }
-        
+
         return visitsByDate;
     }
 
@@ -216,7 +217,7 @@ export class DataProcessorService {
      */
     private async getTopUsers(stats: Stats[]) {
         const userCounts: { [key: number]: number } = {};
-        
+
         for (const stat of stats) {
             if (stat.userId) {
                 userCounts[stat.userId] = (userCounts[stat.userId] || 0) + 1;
@@ -224,14 +225,14 @@ export class DataProcessorService {
         }
 
         const topUsers: Array<{ userId: number; userName: string; visitCount: number }> = [];
-        
+
         for (const userId in userCounts) {
             const user = await this.userRepo.findOne({ where: { id: parseInt(userId) } });
             if (user) {
-                topUsers.push({ 
-                    userId: parseInt(userId), 
-                    userName: user.name, 
-                    visitCount: userCounts[userId] 
+                topUsers.push({
+                    userId: parseInt(userId),
+                    userName: user.name,
+                    visitCount: userCounts[userId]
                 });
             }
         }
@@ -245,7 +246,7 @@ export class DataProcessorService {
     fillMissingDates(visitsByDate: any[], startDate: Date, endDate: Date) {
         const result: Array<{ date: string; count: number }> = [];
         const currentDate = new Date(startDate);
-        
+
         while (currentDate <= endDate) {
             const dateStr = currentDate.toISOString().split('T')[0];
             const existing = visitsByDate.find(v => v.date === dateStr);
@@ -255,7 +256,7 @@ export class DataProcessorService {
             });
             currentDate.setDate(currentDate.getDate() + 1);
         }
-        
+
         return result;
     }
 
@@ -279,3 +280,4 @@ export class DataProcessorService {
         }));
     }
 }
+

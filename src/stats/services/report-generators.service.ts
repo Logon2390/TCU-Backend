@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Stats } from '../stats.entity';
 import { User } from '../../user/user.entity';
 import { GenerateReportDto } from '../../reports/dto/create-report.dto';
-import { ReportStatistics } from '../interfaces/report-statistics.interface';
+import { ReportStatistics } from '../../interfaces/report-statistics.interface';
 import { QueryBuilderService } from './query-builder.service';
 import { DataProcessorService } from './data-processor.service';
 import { ReportStrategyService } from './report-strategy.service';
@@ -159,3 +159,4 @@ export class ReportGeneratorsService {
         };
     }
 }
+

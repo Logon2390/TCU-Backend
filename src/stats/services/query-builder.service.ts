@@ -144,3 +144,4 @@ export class QueryBuilderService {
             .setParameter('o', 'O');
     }
 }
+

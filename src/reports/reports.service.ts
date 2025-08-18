@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Stats } from '../stats/stats.entity';
 import { User } from '../user/user.entity';
 import { GenerateReportDto } from './dto/create-report.dto';
-import { ReportStatistics } from './interfaces/report-statistics.interface';
+import { ReportStatistics } from '../interfaces/report-statistics.interface';
 
 @Injectable()
 export class ReportsService {
