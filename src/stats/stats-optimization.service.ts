@@ -50,7 +50,7 @@ export class StatsOptimizationService {
             }
             return partitions;
         }
-    // ...existing code...
+    
 
     /**
      * Obtiene estadísticas para una partición específica

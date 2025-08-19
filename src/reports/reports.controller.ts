@@ -117,7 +117,7 @@ export class ReportsController {
     }
 
 
-    //endpoint  
+    //endpoint  para generar reportes mensuales  
     @Get('reports/monthly-report/:year/:month')
     @Roles('M', 'A')
     async getMonthlyReport(
@@ -191,4 +191,5 @@ export class ReportsController {
         }
     }
 }
+
 

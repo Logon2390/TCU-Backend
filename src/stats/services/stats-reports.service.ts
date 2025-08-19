@@ -5,23 +5,20 @@ import { Stats } from '../stats.entity';
 import { User } from '../../user/user.entity';
 import { GenerateReportDto } from '../../reports/dto/create-report.dto';
 import { ReportStatistics } from '../../interfaces/report-statistics.interface';
-import { QueryBuilderService } from './query-builder.service';
-import { DataProcessorService } from './data-processor.service';
-import { ReportStrategyService } from './report-strategy.service';
+import { StatsHelpersService } from './stats-helpers.service';
 
 @Injectable()
-export class ReportGeneratorsService {
-    private readonly logger = new Logger(ReportGeneratorsService.name);
+export class StatsReportsService {
+    private readonly logger = new Logger(StatsReportsService.name);
 
     constructor(
         @InjectRepository(Stats)
         private statsRepo: Repository<Stats>,
         @InjectRepository(User)
         private userRepo: Repository<User>,
-        private queryBuilder: QueryBuilderService,
-        private dataProcessor: DataProcessorService,
-        private strategyService: ReportStrategyService,
-    ) {}
+        private helpers: StatsHelpersService,
+    ) { }
+
 
     /**
      * Genera reporte estándar para datasets pequeños
@@ -33,11 +30,9 @@ export class ReportGeneratorsService {
             .where('stats.entryDateTime >= :startDate', { startDate })
             .andWhere('stats.entryDateTime <= :endDate', { endDate });
 
-        // Aplicar filtros usando el servicio de consultas
-        query = this.queryBuilder.buildBaseQuery(query, dto, startDate, endDate);
-
+        query = this.helpers.buildBaseQuery(query, dto, startDate, endDate);
         const stats = await query.getMany();
-        return this.dataProcessor.calculateStatistics(stats, startDate, endDate);
+        return this.helpers.calculateStatistics(stats, startDate, endDate);
     }
 
     /**
@@ -45,14 +40,12 @@ export class ReportGeneratorsService {
      */
     async generateReportMedium(dto: GenerateReportDto, startDate: Date, endDate: Date): Promise<ReportStatistics> {
         const baseQuery = this.statsRepo.createQueryBuilder('stats');
-        const filteredQuery = this.queryBuilder.buildBaseQuery(baseQuery, dto, startDate, endDate);
-        
+        const filteredQuery = this.helpers.buildBaseQuery(baseQuery, dto, startDate, endDate);
         const [aggregatedStats, visitsByDate, topUsers] = await Promise.all([
             this.getAggregatedStatsMedium(filteredQuery),
             this.getVisitsByDateMedium(filteredQuery, startDate, endDate),
             this.getTopUsersMedium(filteredQuery)
         ]);
-
         return this.buildReportFromAggregated(aggregatedStats, visitsByDate, topUsers);
     }
 
@@ -61,14 +54,12 @@ export class ReportGeneratorsService {
      */
     async generateReportLarge(dto: GenerateReportDto, startDate: Date, endDate: Date): Promise<ReportStatistics> {
         const baseQuery = this.statsRepo.createQueryBuilder('stats');
-        const filteredQuery = this.queryBuilder.buildBaseQuery(baseQuery, dto, startDate, endDate);
-        
+        const filteredQuery = this.helpers.buildBaseQuery(baseQuery, dto, startDate, endDate);
         const [aggregatedStats, visitsByDate, topUsers] = await Promise.all([
             this.getAggregatedStatsLarge(filteredQuery),
             this.getVisitsByDateLarge(filteredQuery, startDate, endDate),
             this.getTopUsersLarge(filteredQuery)
         ]);
-
         return this.buildReportFromAggregated(aggregatedStats, visitsByDate, topUsers);
     }
 
@@ -76,12 +67,10 @@ export class ReportGeneratorsService {
      * Genera reporte para datasets masivos
      */
     async generateReportMassive(dto: GenerateReportDto, startDate: Date, endDate: Date): Promise<ReportStatistics> {
-        const datasetSize = await this.strategyService.getDatasetSize(startDate, endDate);
-        const batchSize = this.strategyService.getAdaptiveBatchSize(datasetSize);
-        
+        const datasetSize = await this.helpers.getDatasetSize(startDate, endDate);
+        const batchSize = this.helpers.getAdaptiveBatchSize(datasetSize);
         this.logger.log(`Procesando dataset masivo en lotes de ${batchSize} registros`);
-        
-        return await this.dataProcessor.processBatchReport(startDate, endDate, batchSize);
+        return await this.helpers.processBatchReport(startDate, endDate, batchSize);
     }
 
     /**
@@ -89,49 +78,48 @@ export class ReportGeneratorsService {
      */
     async generateReportHuge(dto: GenerateReportDto, startDate: Date, endDate: Date): Promise<ReportStatistics> {
         this.logger.log('Procesando dataset enorme con particionamiento y streaming');
-        
-        const partitionSize = this.strategyService.calculateOptimalPartitionSize(startDate, endDate);
-        return await this.dataProcessor.processPartitionedReport(startDate, endDate, partitionSize);
+        const partitionSize = this.helpers.calculateOptimalPartitionSize(startDate, endDate);
+        return await this.helpers.processPartitionedReport(startDate, endDate, partitionSize);
     }
 
     // Métodos auxiliares para datasets medianos
     private async getAggregatedStatsMedium(baseQuery: any) {
-        const aggregatedQuery = this.queryBuilder.buildAggregatedStatsQuery(baseQuery);
+        const aggregatedQuery = this.helpers.buildAggregatedStatsQuery(baseQuery);
         return await aggregatedQuery.getRawOne();
     }
 
     private async getVisitsByDateMedium(baseQuery: any, startDate: Date, endDate: Date) {
         const dateQuery = baseQuery.clone();
-        const visitsQuery = this.queryBuilder.buildVisitsByDateQuery(dateQuery);
+        const visitsQuery = this.helpers.buildVisitsByDateQuery(dateQuery);
         const visitsByDate = await visitsQuery.getRawMany();
-        return this.dataProcessor.fillMissingDates(visitsByDate, startDate, endDate);
+        return this.helpers.fillMissingDates(visitsByDate, startDate, endDate);
     }
 
     private async getTopUsersMedium(baseQuery: any) {
         const userQuery = baseQuery.clone();
-        const topUsersQuery = this.queryBuilder.buildTopUsersQuery(userQuery);
+        const topUsersQuery = this.helpers.buildTopUsersQuery(userQuery);
         const topUsersRaw = await topUsersQuery.getRawMany();
-        return await this.dataProcessor.enrichTopUsers(topUsersRaw);
+        return await this.helpers.enrichTopUsers(topUsersRaw);
     }
 
     // Métodos auxiliares para datasets grandes
     private async getAggregatedStatsLarge(baseQuery: any) {
-        const aggregatedQuery = this.queryBuilder.buildAggregatedStatsQuery(baseQuery);
+        const aggregatedQuery = this.helpers.buildAggregatedStatsQuery(baseQuery);
         return await aggregatedQuery.getRawOne();
     }
 
     private async getVisitsByDateLarge(baseQuery: any, startDate: Date, endDate: Date) {
         const dateQuery = baseQuery.clone();
-        const visitsQuery = this.queryBuilder.buildVisitsByDateQuery(dateQuery);
+        const visitsQuery = this.helpers.buildVisitsByDateQuery(dateQuery);
         const visitsByDate = await visitsQuery.getRawMany();
-        return this.dataProcessor.fillMissingDates(visitsByDate, startDate, endDate);
+        return this.helpers.fillMissingDates(visitsByDate, startDate, endDate);
     }
 
     private async getTopUsersLarge(baseQuery: any) {
         const userQuery = baseQuery.clone();
-        const topUsersQuery = this.queryBuilder.buildTopUsersQuery(userQuery);
+        const topUsersQuery = this.helpers.buildTopUsersQuery(userQuery);
         const topUsersRaw = await topUsersQuery.getRawMany();
-        return await this.dataProcessor.enrichTopUsers(topUsersRaw);
+        return await this.helpers.enrichTopUsers(topUsersRaw);
     }
 
     /**
@@ -158,5 +146,8 @@ export class ReportGeneratorsService {
             topUsers
         };
     }
-}
 
+    // --- Métodos fusionados de ReportStrategyService ---
+    // Estrategias de generación de reportes y lógica relacionada
+    // ...mueve aquí los métodos de ReportStrategyService...
+}

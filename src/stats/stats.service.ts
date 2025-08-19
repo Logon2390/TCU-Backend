@@ -19,8 +19,9 @@ export class StatsService {
         private userRepo: Repository<User>,
     ) {}
 
-    // ==================== OPERACIONES BÁSICAS (CRUD) ====================
-    
+    // crud de stats
+
+    // crear
     async create(createStatsDto: CreateStatsDto): Promise<Stats> {
         // Validar que el usuario existe si se proporciona userId
         if (createStatsDto.userId) {
@@ -63,6 +64,7 @@ export class StatsService {
         return savedStats;
     }
 
+    // Obtener todas las estadísticas
     async findAll(page: number = 1, limit: number = 20) {
         const [data, total] = await this.statsRepo.findAndCount({
             relations: ['user'],
@@ -79,6 +81,7 @@ export class StatsService {
         };
     }
 
+    // Obtener una estadística por ID
     async findOne(id: number): Promise<Stats> {
         const stats = await this.statsRepo.findOne({
             where: { id },
@@ -92,6 +95,7 @@ export class StatsService {
         return stats;
     }
 
+    // Actualizar estadística
     async update(id: number, updateStatsDto: UpdateStatsDto): Promise<Stats> {
         const stats = await this.findOne(id);
 
@@ -148,7 +152,7 @@ export class StatsService {
             totalPages: Math.ceil(total / limit)
         };
     }
-
+    // filtrar por rango de fechas
     async findByDateRange(startDate: Date, endDate: Date, page: number = 1, limit: number = 20) {
         const [data, total] = await this.statsRepo.findAndCount({
             where: {
@@ -171,6 +175,7 @@ export class StatsService {
         };
     }
 
+    // Filtrar por género
     async findByGender(gender: string, page: number = 1, limit: number = 20) {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { gender: gender as 'F' | 'M' | 'O' },
@@ -188,6 +193,7 @@ export class StatsService {
         };
     }
 
+    // Filtrar por rango de edad
     async findByAgeRange(minAge: number, maxAge: number, page: number = 1, limit: number = 20) {
         const [data, total] = await this.statsRepo.findAndCount({
             where: {
@@ -210,6 +216,7 @@ export class StatsService {
         };
     }
 
+    // Filtrar por estado
     async findByStatus(status: string, page: number = 1, limit: number = 20) {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { status: status as 'registrada' | 'anulada' },
@@ -227,6 +234,7 @@ export class StatsService {
         };
     }
 
+    // Filtrar por año y mes
     async findByYearMonth(year: number, month: number, page: number = 1, limit: number = 20) {
         const [data, total] = await this.statsRepo.findAndCount({
             where: { year, month },
@@ -244,7 +252,7 @@ export class StatsService {
         };
     }
 
-    // ==================== HISTORIAL DE VISITAS ====================
+    // visitas
     
     async getVisitHistory(dto: VisitHistoryDto) {
         if (!dto.startDate || !dto.endDate) {
@@ -282,7 +290,7 @@ export class StatsService {
         }));
     }
 
-    // ==================== ESTADÍSTICAS RÁPIDAS ====================
+    // estadisticas rapidas
     
     async getQuickStats() {
         const today = new Date();
