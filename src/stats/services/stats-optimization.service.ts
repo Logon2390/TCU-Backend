@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Stats } from './stats.entity';
-import { StatsConfig } from './stats.config';
+import { Stats } from '../stats.entity';
+import { StatsConfig } from '../stats.config';
+
 interface DatePartition {
     start: Date;
     end: Date;

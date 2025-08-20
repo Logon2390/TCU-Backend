@@ -2,8 +2,6 @@ import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put, Query } fro
 import { StatsService } from './stats.service';
 import { CreateStatsDto } from './dto/create-stats.dto';
 import { UpdateStatsDto } from './dto/update-stats.dto';
-import { GenerateReportDto } from '../reports/dto/create-report.dto';
-import { VisitHistoryDto } from './dto/visit-history.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -16,7 +14,6 @@ export class StatsController {
     constructor(private readonly statsService: StatsService) { }
 
     //  ENDPOINTS DE ESTADÍSTICAS 
-
     //endpoint para actualizar una estadistica
     @Put(':id')
     async update(@Param('id') id: string, @Body() dto: UpdateStatsDto) {

@@ -101,7 +101,7 @@ export class ReportsController {
 
     // ENDPOINTS de historial de visitas 
 
-    @Get('reports/visit-history')
+    @Get('reports/visitHistory')
     @Roles('M', 'A')
     async getVisitHistory(@Query() dto: VisitHistoryDto) {
         try {
@@ -118,7 +118,7 @@ export class ReportsController {
 
 
     //endpoint  para generar reportes mensuales  
-    @Get('reports/monthly-report/:year/:month')
+    @Get('reports/monthlyReport/:year/:month')
     @Roles('M', 'A')
     async getMonthlyReport(
         @Param('year') year: string,
@@ -145,7 +145,7 @@ export class ReportsController {
         }
     }
 
-    @Get('reports/age-range-stats')
+    @Get('reports/ageRangeStats')
     @Roles('M', 'A')
     async getAgeRangeStats(@Query() dto: GenerateReportDto) {
         try {
@@ -168,7 +168,7 @@ export class ReportsController {
         }
     }
 
-    @Get('reports/gender-stats')
+    @Get('reports/genderStats')
     @Roles('M', 'A')
     async getGenderStats(@Query() dto: GenerateReportDto) {
         try {
@@ -191,5 +191,3 @@ export class ReportsController {
         }
     }
 }
-
-
