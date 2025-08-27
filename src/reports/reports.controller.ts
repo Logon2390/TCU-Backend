@@ -16,25 +16,35 @@ export class ReportsController {
      */
     @Post('generate')
     @Roles('admin', 'user')
-    async generateReport(@Body() generateReportDto: GenerateReportDto): Promise<ReportStatistics> {
-        return this.reportsService.generateReport(generateReportDto);
+    async generateReport(@Body() generateReportDto: GenerateReportDto) {
+        try {
+            const report = await this.reportsService.generateReport(generateReportDto);
+            return new ResponseDTO(true, 'Reporte generado correctamente', report);
+        } catch (error) {
+            return new ResponseDTO(false, error.message);
+        }
     }
 
     /**
      * Genera un reporte rápido para el día actual
      */
     @Get('today')
-    async getTodayReport(): Promise<ReportStatistics> {
+    async getTodayReport() {
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
         const dateStr = `${yyyy}-${mm}-${dd}`;
 
-        return this.reportsService.generateReport({
-            startDate: dateStr,
-            endDate: dateStr
-        });
+        try {
+            const report = await this.reportsService.generateReport({
+                startDate: dateStr,
+                endDate: dateStr
+            });
+            return new ResponseDTO(true, 'Reporte del día obtenido correctamente', report);
+        } catch (error) {
+            return new ResponseDTO(false, error.message);
+        }
     }
 
     /**
@@ -42,7 +52,7 @@ export class ReportsController {
      */
     @Get('month')
     @Roles('admin', 'user')
-    async getMonthReport(): Promise<ReportStatistics> {
+    async getMonthReport() {
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -50,10 +60,15 @@ export class ReportsController {
         const endDate = new Date(yyyy, today.getMonth() + 1, 0);
         const endDateStr = `${yyyy}-${mm}-${String(endDate.getDate()).padStart(2, '0')}`;
 
-        return this.reportsService.generateReport({
-            startDate: startDateStr,
-            endDate: endDateStr
-        });
+        try {
+            const report = await this.reportsService.generateReport({
+                startDate: startDateStr,
+                endDate: endDateStr
+            });
+            return new ResponseDTO(true, 'Reporte del mes obtenido correctamente', report);
+        } catch (error) {
+            return new ResponseDTO(false, error.message);
+        }
     }
 
     /**
@@ -61,13 +76,18 @@ export class ReportsController {
      */
     @Get('year')
     @Roles('admin', 'user')
-    async getYearReport(): Promise<ReportStatistics> {
+    async getYearReport() {
         const today = new Date();
         const yyyy = today.getFullYear();
-        return this.reportsService.generateReport({
-            startDate: `${yyyy}-01-01`,
-            endDate: `${yyyy}-12-31`
-        });
+        try {
+            const report = await this.reportsService.generateReport({
+                startDate: `${yyyy}-01-01`,
+                endDate: `${yyyy}-12-31`
+            });
+            return new ResponseDTO(true, 'Reporte del año obtenido correctamente', report);
+        } catch (error) {
+            return new ResponseDTO(false, error.message);
+        }
     }
 
     /**
@@ -84,17 +104,22 @@ export class ReportsController {
         @Query('userId') userId?: number,
         @Query('ageRange') ageRange?: string,
         @Query('moduleId') moduleId?: number,
-    ): Promise<ReportStatistics> {
-        return this.reportsService.generateReport({
-            startDate,
-            endDate,
-            gender: gender as 'F' | 'M' | 'O' | undefined,
-            minAge,
-            maxAge,
-            userId,
-            ageRange: ageRange as 'infancia' | 'juventud' | 'adultez_joven' | 'adultez_media' | 'vejez' | undefined,
-            moduleId
-        });
+    ) {
+        try {
+            const report = await this.reportsService.generateReport({
+                startDate,
+                endDate,
+                gender: gender as 'F' | 'M' | 'O' | undefined,
+                minAge,
+                maxAge,
+                userId,
+                ageRange: ageRange as 'infancia' | 'juventud' | 'adultez_joven' | 'adultez_media' | 'vejez' | undefined,
+                moduleId
+            });
+            return new ResponseDTO(true, 'Reporte personalizado generado correctamente', report);
+        } catch (error) {
+            return new ResponseDTO(false, error.message);
+        }
     }
 
 
