@@ -238,9 +238,6 @@ export class StatsHelpersService {
         if (dto.userId) {
             query = query.andWhere('stats.userId = :userId', { userId: dto.userId });
         }
-        if (dto.status) {
-            query = query.andWhere('stats.status = :status', { status: dto.status });
-        }
         if (dto.ageRange) {
             const { minAge, maxAge } = this.getAgeRange(dto.ageRange);
             query = query.andWhere('stats.age BETWEEN :minAge AND :maxAge', { minAge, maxAge });

@@ -24,10 +24,10 @@ export class GenerateReportDto {
   userId?: number;
 
   @IsOptional()
-  @IsEnum(['activo', 'inactivo', 'pendiente'])
-  status?: 'activo' | 'inactivo' | 'pendiente';
-
-  @IsOptional()
   @IsEnum(['infancia', 'juventud', 'adultez_joven', 'adultez_media', 'vejez'])
   ageRange?: 'infancia' | 'juventud' | 'adultez_joven' | 'adultez_media' | 'vejez';
+
+  @IsOptional()
+  @IsNumber()
+  moduleId?: number;
 }

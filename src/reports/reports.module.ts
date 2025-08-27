@@ -2,14 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
-import { Stats } from '../stats/stats.entity';
 import { User } from '../user/user.entity';
-import { StatsModule } from '../stats/stats.module';
+import { Record } from '../record/record.entity';
+import { ModuleEntity } from '../module/module.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Stats, User]),
-    StatsModule,
+    TypeOrmModule.forFeature([Record, User, ModuleEntity]),
   ],
   controllers: [ReportsController],
   providers: [ReportsService],
