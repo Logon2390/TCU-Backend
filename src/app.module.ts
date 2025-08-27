@@ -6,7 +6,6 @@ import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 import { ModuleModule } from './module/module.module';
 import { RecordModule } from './record/record.module';
-import { StatsModule } from './stats/stats.module';
 import { ReportsModule } from './reports/reports.module';
 
 @Module({
@@ -40,7 +39,6 @@ import { ReportsModule } from './reports/reports.module';
     AdminModule,
     ModuleModule,
     RecordModule,
-    StatsModule,
     ReportsModule,
   ],
    providers: [
