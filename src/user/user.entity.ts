@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 @Entity()
 export class User {
@@ -12,9 +12,11 @@ export class User {
   document: string;
 
   @Column({ type: 'enum', enum: ['F', 'M', 'O'] })
+  @Index('idx_user_gender')
   gender: 'F' | 'M' | 'O';
 
   @Column({ type: 'date', nullable: true })
+  @Index('idx_user_birthday')
   birthday: Date;
 
   @Column({ type: 'date', nullable: true })
