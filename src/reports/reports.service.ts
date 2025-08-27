@@ -193,7 +193,7 @@ export class ReportsService {
         }));
     }
 
-    private async getTopModules(baseQuery: any): Promise<string[]> {
+    private async getTopModules(baseQuery: any): Promise<Array<{ name: string; visitCount: number }>> {
         const moduleQuery = baseQuery.clone();
 
         const topModulesRaw = await moduleQuery
@@ -207,7 +207,10 @@ export class ReportsService {
             .limit(10)
             .getRawMany();
 
-        return topModulesRaw.map((m: any) => m.moduleName);
+        return topModulesRaw.map((m: any) => ({
+            name: m.moduleName,
+            visitCount: parseInt(m.visitCount)
+        }));
     }
 
     /**
