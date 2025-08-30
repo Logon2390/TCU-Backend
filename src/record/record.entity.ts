@@ -25,6 +25,6 @@ export class Record {
   module: ModuleEntity;
 
   @Column({ type: 'datetime' })
-  @Index('idx_record_date')
-  date: Date;
+  @Index('idx_record_visited_at')
+  visitedAt: Date;
 }

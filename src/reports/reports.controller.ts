@@ -121,7 +121,4 @@ export class ReportsController {
             return new ResponseDTO(false, error.message);
         }
     }
-
-
-    // Limpieza: se removieron endpoints que dependían de StatsService
 }

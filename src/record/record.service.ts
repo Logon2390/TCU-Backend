@@ -47,7 +47,7 @@ export class RecordService {
       const incomingLastRecord: Date | undefined = (dto.user as any)?.lastRecord
         ? new Date((dto.user as any).lastRecord)
         : undefined;
-      user.lastRecord = incomingLastRecord ?? new Date(dto.date);
+      user.lastRecord = incomingLastRecord ?? new Date(dto.visitedAt);
       await this.userRepo.save(user);
     }
 
@@ -61,7 +61,7 @@ export class RecordService {
     const record = this.recordRepo.create({
       user,
       module,
-      date: new Date(dto.date),
+      visitedAt: new Date(dto.visitedAt),
     });
 
     return this.recordRepo.save(record);
@@ -85,7 +85,7 @@ export class RecordService {
     return this.recordRepo.find({
       where: { user: { document } },
       relations: ['user', 'module'],
-      order: { date: 'DESC' },
+      order: { visitedAt: 'DESC' },
     });
   }
 
@@ -94,7 +94,7 @@ export class RecordService {
     return this.recordRepo.find({
       where: { module: { id: moduleId } },
       relations: ['user', 'module'],
-      order: { date: 'DESC' },
+      order: { visitedAt: 'DESC' },
     });
   }
 
@@ -127,8 +127,8 @@ export class RecordService {
       if (module) record.module = module;
     }
 
-    if (dto.date) {
-      record.date = dto.date;
+    if (dto.visitedAt) {
+      record.visitedAt = dto.visitedAt;
     }
 
     return this.recordRepo.save(record);

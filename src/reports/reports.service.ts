@@ -42,8 +42,8 @@ export class ReportsService {
             .createQueryBuilder('record')
             .leftJoin('record.user', 'user')
             .leftJoin('record.module', 'module')
-            .where('record.date >= :startDate', { startDate: startOfDayUtc })
-            .andWhere('record.date < :endDate', { endDate: endExclusiveUtc });
+            .where('record.visitedAt >= :startDate', { startDate: startOfDayUtc })
+            .andWhere('record.visitedAt < :endDate', { endDate: endExclusiveUtc });
 
         // Filtros
         if (dto.gender) {
@@ -55,19 +55,19 @@ export class ReportsService {
             const { minAge, maxAge } = this.getAgeRange(dto.ageRange);
             baseQuery = baseQuery
                 .andWhere('user.birthday IS NOT NULL')
-                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN :minAge AND :maxAge', { minAge, maxAge });
+                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN :minAge AND :maxAge', { minAge, maxAge });
         }
 
         if (dto.minAge !== undefined) {
             baseQuery = baseQuery
                 .andWhere('user.birthday IS NOT NULL')
-                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.date) >= :minAge', { minAge: dto.minAge });
+                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) >= :minAge', { minAge: dto.minAge });
         }
 
         if (dto.maxAge !== undefined) {
             baseQuery = baseQuery
                 .andWhere('user.birthday IS NOT NULL')
-                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.date) <= :maxAge', { maxAge: dto.maxAge });
+                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) <= :maxAge', { maxAge: dto.maxAge });
         }
 
         if (dto.userId) {
@@ -83,15 +83,15 @@ export class ReportsService {
             .select([
                 'COUNT(*) as totalVisits',
                 'COUNT(DISTINCT user.id) as totalUsers',
-                'AVG(TIMESTAMPDIFF(YEAR, user.birthday, record.date)) as averageAge',
+                'AVG(TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt)) as averageAge',
                 "SUM(CASE WHEN user.gender = 'F' THEN 1 ELSE 0 END) as fCount",
                 "SUM(CASE WHEN user.gender = 'M' THEN 1 ELSE 0 END) as mCount",
                 "SUM(CASE WHEN user.gender = 'O' THEN 1 ELSE 0 END) as oCount",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) <= 14 THEN 1 ELSE 0 END) as infancia",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN 15 AND 24 THEN 1 ELSE 0 END) as juventud",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN 25 AND 44 THEN 1 ELSE 0 END) as adultez_joven",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN 45 AND 64 THEN 1 ELSE 0 END) as adultez_media",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) >= 65 THEN 1 ELSE 0 END) as vejez",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) <= 14 THEN 1 ELSE 0 END) as infancia",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 15 AND 24 THEN 1 ELSE 0 END) as juventud",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 25 AND 44 THEN 1 ELSE 0 END) as adultez_joven",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 45 AND 64 THEN 1 ELSE 0 END) as adultez_media",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) >= 65 THEN 1 ELSE 0 END) as vejez",
             ])
             .getRawOne();
 
@@ -153,10 +153,10 @@ export class ReportsService {
 
         const visitsByDate = await dateQuery
             .select([
-                'DATE(record.date) as date',
+                'DATE(record.visitedAt) as date',
                 'COUNT(*) as count'
             ])
-            .groupBy('DATE(record.date)')
+            .groupBy('DATE(record.visitedAt)')
             .orderBy('date', 'ASC')
             .getRawMany();
 
@@ -172,12 +172,12 @@ export class ReportsService {
 
         const visitsByDateAndHour = await dateQuery
             .select([
-                'DATE(record.date) as date',
-                'HOUR(record.date) as hour',
+                'DATE(record.visitedAt) as date',
+                'HOUR(record.visitedAt) as hour',
                 'COUNT(*) as count'
             ])
-            .groupBy('DATE(record.date)')
-            .addGroupBy('HOUR(record.date)')
+            .groupBy('DATE(record.visitedAt)')
+            .addGroupBy('HOUR(record.visitedAt)')
             .orderBy('date', 'ASC')
             .addOrderBy('hour', 'ASC')
             .getRawMany();

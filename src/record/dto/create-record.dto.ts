@@ -13,5 +13,5 @@ export class CreateRecordDto {
 
   @IsDateString({ strict: true })
   @Type(() => Date)
-  date: Date;
+  visitedAt: Date;
 }
