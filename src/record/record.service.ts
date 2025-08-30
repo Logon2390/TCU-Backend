@@ -36,10 +36,18 @@ export class RecordService {
       }
 
       user = this.userRepo.create(dto.user);
+      // Si viene lastRecord en el payload del usuario, asegurar que sea Date
+      if (user.lastRecord && typeof (user.lastRecord as any) === 'string') {
+        user.lastRecord = new Date(user.lastRecord as unknown as string);
+      }
       user = await this.userRepo.save(user);
     } else {
       // Si el usuario existe, actualizar lastRecord
-      user.lastRecord = dto.date;
+      // Preferir lastRecord explícito del payload si viene, sino usar dto.date
+      const incomingLastRecord: Date | undefined = (dto.user as any)?.lastRecord
+        ? new Date((dto.user as any).lastRecord)
+        : undefined;
+      user.lastRecord = incomingLastRecord ?? new Date(dto.date);
       await this.userRepo.save(user);
     }
 
@@ -53,7 +61,7 @@ export class RecordService {
     const record = this.recordRepo.create({
       user,
       module,
-      date: dto.date,
+      date: new Date(dto.date),
     });
 
     return this.recordRepo.save(record);
