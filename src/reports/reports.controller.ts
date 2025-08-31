@@ -12,20 +12,6 @@ export class ReportsController {
     constructor(private readonly reportsService: ReportsService) { }
 
     /**
-     * Genera un reporte completo basado en los parámetros proporcionados
-     */
-    @Post('generate')
-    @Roles('admin', 'user')
-    async generateReport(@Body() generateReportDto: GenerateReportDto) {
-        try {
-            const report = await this.reportsService.generateReport(generateReportDto);
-            return new ResponseDTO(true, 'Reporte generado correctamente', report);
-        } catch (error) {
-            return new ResponseDTO(false, error.message);
-        }
-    }
-
-    /**
      * Genera un reporte rápido para el día actual
      */
     @Get('today')
