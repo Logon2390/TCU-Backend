@@ -38,8 +38,8 @@ export class ReportsService {
             .createQueryBuilder('record')
             .leftJoin('record.user', 'user')
             .leftJoin('record.module', 'module')
-            .where('record.date >= :startDate', { startDate: dto.startDate })
-            .andWhere('record.date <= :endDate', { endDate: dto.endDate });
+            .where('DATE(record.visitedAt) >= :startDate', { startDate: dto.startDate })
+            .andWhere('DATE(record.visitedAt) <= :endDate', { endDate: dto.endDate });
 
         // Filtros
         if (dto.gender) {
@@ -51,19 +51,19 @@ export class ReportsService {
             const { minAge, maxAge } = this.getAgeRange(dto.ageRange);
             baseQuery = baseQuery
                 .andWhere('user.birthday IS NOT NULL')
-                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN :minAge AND :maxAge', { minAge, maxAge });
+                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN :minAge AND :maxAge', { minAge, maxAge });
         }
 
         if (dto.minAge !== undefined) {
             baseQuery = baseQuery
                 .andWhere('user.birthday IS NOT NULL')
-                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.date) >= :minAge', { minAge: dto.minAge });
+                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) >= :minAge', { minAge: dto.minAge });
         }
 
         if (dto.maxAge !== undefined) {
             baseQuery = baseQuery
                 .andWhere('user.birthday IS NOT NULL')
-                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.date) <= :maxAge', { maxAge: dto.maxAge });
+                .andWhere('TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) <= :maxAge', { maxAge: dto.maxAge });
         }
 
         if (dto.userId) {
@@ -79,24 +79,23 @@ export class ReportsService {
             .select([
                 'COUNT(*) as totalVisits',
                 'COUNT(DISTINCT user.id) as totalUsers',
-                'AVG(TIMESTAMPDIFF(YEAR, user.birthday, record.date)) as averageAge',
+                'AVG(TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt)) as averageAge',
                 "SUM(CASE WHEN user.gender = 'F' THEN 1 ELSE 0 END) as fCount",
                 "SUM(CASE WHEN user.gender = 'M' THEN 1 ELSE 0 END) as mCount",
                 "SUM(CASE WHEN user.gender = 'O' THEN 1 ELSE 0 END) as oCount",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) <= 14 THEN 1 ELSE 0 END) as infancia",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN 15 AND 24 THEN 1 ELSE 0 END) as juventud",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN 25 AND 44 THEN 1 ELSE 0 END) as adultez_joven",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) BETWEEN 45 AND 64 THEN 1 ELSE 0 END) as adultez_media",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.date) >= 65 THEN 1 ELSE 0 END) as vejez",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) <= 14 THEN 1 ELSE 0 END) as infancia",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 15 AND 24 THEN 1 ELSE 0 END) as juventud",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 25 AND 44 THEN 1 ELSE 0 END) as adultez_joven",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 45 AND 64 THEN 1 ELSE 0 END) as adultez_media",
+                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) >= 65 THEN 1 ELSE 0 END) as vejez",
             ])
             .getRawOne();
 
-        // Visitas por fecha
         const visitsByDate = await this.getVisitsByDate(baseQuery, startDate, endDate);
-        // Top usuarios
+        const visitsByDateAndHour = await this.getVisitsByDateAndHour(baseQuery, startDate, endDate);
         const topUsers = await this.getTopUsers(baseQuery);
-        // Top módulos
         const topModules = await this.getTopModules(baseQuery);
+        const isSingleDay = dto.startDate === dto.endDate;
 
         return {
             totalVisits: parseInt(aggregatedStats.totalVisits || '0'),
@@ -114,7 +113,9 @@ export class ReportsService {
                 vejez: parseInt(aggregatedStats.vejez || '0')
             },
             averageAge: Math.round(parseFloat(aggregatedStats.averageAge) || 0),
-            visitsByDate,
+            visitsByDate: isSingleDay
+                ? visitsByDateAndHour
+                : visitsByDate,
             topUsers,
             topModules,
         };
@@ -148,15 +149,35 @@ export class ReportsService {
 
         const visitsByDate = await dateQuery
             .select([
-                'record.date as date',
+                'DATE(record.visitedAt) as date',
                 'COUNT(*) as count'
             ])
-            .groupBy('record.date')
+            .groupBy('DATE(record.visitedAt)')
             .orderBy('date', 'ASC')
             .getRawMany();
 
-        // Rellenar fechas faltantes con 0
-        return this.fillMissingDates(visitsByDate, startDate, endDate);
+        // Rellenar fechas faltantes con 0 (diario)
+        return this.fillMissingDates(visitsByDate, startDate, endDate, false);
+    }
+
+     /**
+     * Obtiene visitas por fecha y hora
+     */
+     private async getVisitsByDateAndHour(baseQuery: any, startDate: Date, endDate: Date) {
+        const dateQuery = baseQuery.clone();
+
+        const visitsByDateAndHour = await dateQuery
+            .select([
+                'DATE(record.visitedAt) as date',
+                'HOUR(record.visitedAt) as hour',
+                'COUNT(*) as count'
+            ])
+            .groupBy('DATE(record.visitedAt)')
+            .addGroupBy('HOUR(record.visitedAt)')
+            .orderBy('date', 'ASC')
+            .addOrderBy('hour', 'ASC')
+            .getRawMany();
+        return this.fillMissingDates(visitsByDateAndHour, startDate, endDate, true);
     }
 
     /**
@@ -214,23 +235,46 @@ export class ReportsService {
     }
 
     /**
-     * Rellena fechas faltantes en visitas por fecha
-     */
-    private fillMissingDates(visitsByDate: any[], startDate: Date, endDate: Date) {
-        const result: Array<{ date: string; count: number }> = [];
-        const currentDate = new Date(startDate);
+    * Rellena fechas (y horas opcionalmente) faltantes en visitas
+    */
+    private fillMissingDates(data: any[], startDate: Date, endDate: Date, forceHourly = false) {
+    const isHourly = forceHourly || data.some((d) => d.hour !== undefined);
 
-        while (currentDate <= endDate) {
-            const dateStr = currentDate.toISOString().split('T')[0];
-            const existing = visitsByDate.find(v => v.date === dateStr);
-            result.push({
-                date: dateStr,
-                count: existing ? parseInt(existing.count) : 0
-            });
-            currentDate.setDate(currentDate.getDate() + 1);
+    const makeKey = (date: Date | string, hour?: number) => {
+        const dateStr =
+            typeof date === "string"
+                ? (date.includes("T") ? date.split("T")[0] : date)
+                : new Date(date).toISOString().split("T")[0];
+        return isHourly ? `${dateStr}|${hour ?? 0}` : dateStr;
+    };
+
+    const counts = new Map<string, number>();
+    for (const v of data) {
+        const key = makeKey(v.date, isHourly ? Number(v.hour) || 0 : undefined);
+        const increment = Number(v.count) || 0;
+        counts.set(key, (counts.get(key) || 0) + increment);
+    }
+
+    const result: any[] = [];
+    const current = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+    const last = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate()));
+
+    while (current <= last) {
+        const dateStr = current.toISOString().split("T")[0];
+
+        if (isHourly) {
+            for (let hour = 0; hour < 24; hour++) {
+                const key = `${dateStr}|${hour}`;
+                result.push({ date: dateStr, hour, count: counts.get(key) ?? 0 });
+            }
+        } else {
+            result.push({ date: dateStr, count: counts.get(dateStr) ?? 0 });
         }
 
-        return result;
+        current.setUTCDate(current.getUTCDate() + 1);
     }
+
+    return result;
+}
 
 }

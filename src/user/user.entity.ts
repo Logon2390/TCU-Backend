@@ -19,6 +19,6 @@ export class User {
   @Index('idx_user_birthday')
   birthday: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   lastRecord: Date;
 }
