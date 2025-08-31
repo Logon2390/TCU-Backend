@@ -26,10 +26,6 @@ export class ReportsService {
     async generateReport(dto: GenerateReportDto): Promise<ReportStatistics> {
         const startDate = new Date(dto.startDate);
         const endDate = new Date(dto.endDate);
-        // Rango de día completo en UTC para columnas DATETIME
-        const startOfDayUtc = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate(), 0, 0, 0, 0));
-        const endExclusiveUtc = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate(), 0, 0, 0, 0));
-        endExclusiveUtc.setUTCDate(endExclusiveUtc.getUTCDate() + 1);
 
         // Validar fechas
         if (startDate > endDate) {
@@ -42,8 +38,8 @@ export class ReportsService {
             .createQueryBuilder('record')
             .leftJoin('record.user', 'user')
             .leftJoin('record.module', 'module')
-            .where('record.visitedAt >= :startDate', { startDate: startOfDayUtc })
-            .andWhere('record.visitedAt < :endDate', { endDate: endExclusiveUtc });
+            .where('DATE(record.visitedAt) >= :startDate', { startDate: dto.startDate })
+            .andWhere('DATE(record.visitedAt) <= :endDate', { endDate: dto.endDate });
 
         // Filtros
         if (dto.gender) {
