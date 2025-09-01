@@ -11,6 +11,7 @@ import { Response } from 'express';
 import { Res } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class AdminService {
@@ -50,29 +51,59 @@ export class AdminService {
     return this.findOne(id);
   }
 
-  async login(dto: LoginAdminDto, res: Response) {
+  async login(dto: LoginAdminDto) {
     const admin = await this.adminRepo.findOneBy({ email: dto.email });
-    if (!admin) throw new UnauthorizedException('Correo no encontrado');
+    if (!admin) throw new UnauthorizedException('Correo no encontrado o contraseña incorrecta');
 
     const match = await bcrypt.compare(dto.password, admin.password);
-    if (!match) throw new UnauthorizedException('Contraseña incorrecta');
+    if (!match) throw new UnauthorizedException('Correo no encontrado o contraseña incorrecta');
 
-    const payload = { sub: admin.id, email: admin.email, role: admin.role };
+    //generate random access code
+    const accessCode = randomInt(100000, 900000);
+    admin.accessCode = await bcrypt.hash(accessCode.toString(), 10);
+
+    //set access code expiry (15 minutes)
+    admin.accessCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    //save admin access code
+    await this.adminRepo.save(admin);
+
+    //send access code to email
+    await this.mailService.sendAccessCode(admin.email, accessCode);
+
+    return true;
+  }
+
+  async verifyAccessCode(email: string, accessCode: string, res: Response) {
+    const admin = await this.adminRepo.findOneBy({ email });
+    if (!admin) throw new UnauthorizedException('Correo no encontrado o contraseña incorrecta');
+    if(admin.accessCode === null) throw new UnauthorizedException('Código de acceso inválido');
+    if(admin.accessCodeExpiry && admin.accessCodeExpiry < new Date()) 
+      throw new UnauthorizedException('Código de acceso expirado');
+
+    const match = await bcrypt.compare(accessCode, admin.accessCode);
+    if (!match) throw new UnauthorizedException('Código de acceso inválido');
+
+    //reset access code
+    admin.accessCode = null;
+    admin.accessCodeExpiry = null;
+    await this.adminRepo.save(admin);
+
+    const payload = { sub: admin.id };
     const token = await this.jwtService.signAsync(payload);
 
     // Set cookie (HttpOnly for security)
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+      maxAge: 60 * 60 * 1000, // 1 hora
     });
-
+    
     return {
       admin: {
         id: admin.id,
         name: admin.name,
-        email: admin.email,
         role: admin.role,
       },
     };
