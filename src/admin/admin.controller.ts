@@ -37,10 +37,26 @@ export class AdminController {
 
 
   @Post('login')
-  async login(@Body() dto: LoginAdminDto, @Res({ passthrough: true }) res: Response) {
+  async login(@Body() dto: LoginAdminDto) {
     try {
-      const result = await this.adminService.login(dto, res);
+      const result = await this.adminService.login(dto);
       return new ResponseDTO(true, "Login exitoso", result);
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
+  @Get('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token');
+    return new ResponseDTO(true, "Logout exitoso");
+  }
+
+  @Post('verifyAccessCode')
+  async verifyAccessCode(@Body() dto: { email: string; accessCode: string }, @Res({ passthrough: true }) res: Response) {
+    try {
+      const result = await this.adminService.verifyAccessCode(dto.email, dto.accessCode, res);
+      return new ResponseDTO(true, "Código de acceso verificado", result);
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }

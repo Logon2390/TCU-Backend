@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNumber, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateAdminDto {
   @IsString()
@@ -14,6 +14,7 @@ export class CreateAdminDto {
   @IsEnum(['M', 'A'])
   role: 'M' | 'A';
 
-  @IsNumber()
-  accessCode: number;
+  @IsOptional()
+  @IsString()
+  accessCode: string;
 }
