@@ -17,12 +17,9 @@ export class Admin {
   @Column({ type: 'enum', enum: ['M', 'A'] })
   role: 'M' | 'A';
 
-  @Column()
-  accessCode: number;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  resetToken: string | null;
+  @Column({ type: 'varchar', length: 256, nullable: true })
+  accessCode: string | null;
 
   @Column({ type: 'datetime', nullable: true })
-  resetTokenExpiry: Date | null;
+  accessCodeExpiry: Date | null;
 }
