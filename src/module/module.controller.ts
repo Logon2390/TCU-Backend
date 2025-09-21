@@ -4,17 +4,13 @@ import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
 import { ResponseDTO } from '../common/dto/response.dto';
-
-@UseGuards(RolesGuard)
 @Controller('modules')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) { }
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  @Roles('A', 'M')
   async create(@Body() dto: CreateModuleDto) {
     try {
       const module = await this.moduleService.create(dto);
