@@ -137,4 +137,13 @@ export class RecordService {
   async remove(id: number) {
     await this.recordRepo.delete(id);
   }
+
+  async getRecordsByUser(userId: number) {
+    const records = await this.recordRepo.find({
+      where: { user: { id: userId } },
+      relations: ['module'],
+      order: { visitedAt: 'DESC' },
+    });
+    return records.map(({ user, ...rest }) => rest);
+  }
 }

@@ -3,8 +3,6 @@ import { RecordService } from './record.service';
 import { CreateRecordDto } from './dto/create-record.dto';
 import { UpdateRecordDto } from './dto/update-record.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
 import { ResponseDTO } from '../common/dto/response.dto';
 
 
@@ -12,6 +10,7 @@ import { ResponseDTO } from '../common/dto/response.dto';
 export class RecordController {
   constructor(private readonly recordService: RecordService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() dto: CreateRecordDto) {
     try {
@@ -21,7 +20,7 @@ export class RecordController {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+
   @Get()
   async findAll() {
     try {
@@ -31,7 +30,8 @@ export class RecordController {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -43,7 +43,7 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('user/:document')
   async findByUserDocument(@Param('document') document: string) {
     try {
@@ -54,7 +54,7 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('module/:moduleId')
   async findByModule(@Param('moduleId') moduleId: string) {
     try {
@@ -64,9 +64,9 @@ export class RecordController {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @Roles('M')
   async update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     try {
       const record = await this.recordService.update(+id, dto);
@@ -75,13 +75,24 @@ export class RecordController {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  @Roles('M')
   async remove(@Param('id') id: string) {
     try {
       await this.recordService.remove(+id);
       return new ResponseDTO(true, 'Registro eliminado exitosamente');
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('records/:userId')
+  async getRecordsByUser(@Param('userId') userId: number) {
+    try {
+      const records = await this.recordService.getRecordsByUser(+userId);
+      return new ResponseDTO(true, 'Registros del usuario obtenidos exitosamente', records);
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }

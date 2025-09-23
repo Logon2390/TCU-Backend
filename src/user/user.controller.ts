@@ -3,9 +3,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { UseGuards } from '@nestjs/common';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/auth/roles.decorator';
+import { UseGuards } from '@nestjs/common'; 
 import { ResponseDTO } from '../common/dto/response.dto';
 
 
@@ -13,6 +11,7 @@ import { ResponseDTO } from '../common/dto/response.dto';
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
 
@@ -25,8 +24,7 @@ export class UserController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('M')
+  @UseGuards(JwtAuthGuard)
   async findAll() {
     try {
       const users = await this.userService.findAll();
@@ -75,8 +73,7 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('M')
+  @UseGuards(JwtAuthGuard)
   async remove(@Param('id') id: string) {
     try {
       await this.userService.remove(+id);
