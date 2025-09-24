@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from './admin.entity';
@@ -8,8 +13,6 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
-import { Res } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { MailService } from './mail.service';
 import { randomInt } from 'crypto';
 
@@ -20,16 +23,26 @@ export class AdminService {
     private adminRepo: Repository<Admin>,
     private jwtService: JwtService,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   async create(dto: CreateAdminDto) {
     const hash = await bcrypt.hash(dto.password, 10);
+    const checkEmail = await this.adminRepo.findOneBy({ email: dto.email });
+    if (checkEmail) {
+      throw new BadRequestException('El correo electrónico ya está en uso');
+    }
+
     const admin = this.adminRepo.create({ ...dto, password: hash });
-    return this.adminRepo.save(admin);
+    return this.adminRepo.save(admin).then((admin) => this.mapAdmin(admin));
   }
 
   findAll() {
-    return this.adminRepo.find();
+    return this.adminRepo
+      .find()
+      .then((admins) => admins.map(this.mapAdmin))
+      .catch((error) => {
+        throw new Error(error);
+      });
   }
 
   findOne(id: number) {
@@ -42,21 +55,26 @@ export class AdminService {
       throw new Error('Admin no encontrado');
     }
 
-    // Si el DTO incluye "password", la hasheamos
     if (dto.password) {
       dto.password = await bcrypt.hash(dto.password, 10);
     }
 
     await this.adminRepo.update(id, dto);
-    return this.findOne(id);
+    return this.findOne(id).then(this.mapAdmin);
   }
 
   async login(dto: LoginAdminDto) {
     const admin = await this.adminRepo.findOneBy({ email: dto.email });
-    if (!admin) throw new UnauthorizedException('Correo no encontrado o contraseña incorrecta');
+    if (!admin)
+      throw new UnauthorizedException(
+        'Correo no encontrado o contraseña incorrecta',
+      );
 
     const match = await bcrypt.compare(dto.password, admin.password);
-    if (!match) throw new UnauthorizedException('Correo no encontrado o contraseña incorrecta');
+    if (!match)
+      throw new UnauthorizedException(
+        'Correo no encontrado o contraseña incorrecta',
+      );
 
     //generate random access code
     const accessCode = randomInt(100000, 900000);
@@ -76,9 +94,15 @@ export class AdminService {
 
   async verifyAccessCode(email: string, accessCode: string, res: Response) {
     const admin = await this.adminRepo.findOneBy({ email });
-    if (!admin) throw new UnauthorizedException('Correo no encontrado o contraseña incorrecta');
-    if(admin.accessCode === null) throw new UnauthorizedException('Código de acceso inválido');
-    if(admin.accessCodeExpiry && admin.accessCodeExpiry < new Date()) 
+    if (!admin)
+      throw new UnauthorizedException(
+        'Correo no encontrado o contraseña incorrecta',
+      );
+
+    if (admin.accessCode === null)
+      throw new UnauthorizedException('Código de acceso inválido');
+
+    if (admin.accessCodeExpiry && admin.accessCodeExpiry < new Date())
       throw new UnauthorizedException('Código de acceso expirado');
 
     const match = await bcrypt.compare(accessCode, admin.accessCode);
@@ -123,7 +147,6 @@ export class AdminService {
     return { message: 'Correo enviado' };
   }
 
-
   async resetPassword(token: string, newPassword: string) {
     let payload: any;
     try {
@@ -142,5 +165,13 @@ export class AdminService {
     await this.adminRepo.save(admin);
 
     return { message: 'Contraseña actualizada exitosamente' };
+  }
+  mapAdmin(admin: Admin) {
+    return {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+    };
   }
 }
