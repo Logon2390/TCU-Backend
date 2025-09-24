@@ -22,4 +22,10 @@ export class Admin {
 
   @Column({ type: 'datetime', nullable: true })
   accessCodeExpiry: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  createdAt: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  updatedAt: Date | null;
 }

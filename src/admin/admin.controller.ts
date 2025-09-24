@@ -6,8 +6,6 @@ import { LoginAdminDto } from './dto/login-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/auth/roles.decorator';
 import { ResponseDTO } from '../common/dto/response.dto';
 @Controller('admins')
 export class AdminController {
@@ -83,8 +81,7 @@ export class AdminController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('M')
+  @UseGuards(JwtAuthGuard)
   async findAll() {
     try {
 
