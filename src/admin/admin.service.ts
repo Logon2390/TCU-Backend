@@ -15,6 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { MailService } from './mail.service';
 import { randomInt } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AdminService {
@@ -23,10 +24,21 @@ export class AdminService {
     private adminRepo: Repository<Admin>,
     private jwtService: JwtService,
     private mailService: MailService,
+    private configService: ConfigService,
   ) {}
 
+  private async hash(password: string): Promise<string> {
+    const salt = this.configService.get<string>('SALT') || '';
+    return await bcrypt.hash(password + salt, 10);
+  }
+
+  private async verify(password: string, hash: string): Promise<boolean> {
+    const salt = this.configService.get<string>('SALT') || '';
+    return await bcrypt.compare(password + salt, hash);
+  }
+
   async create(dto: CreateAdminDto) {
-    const hash = await bcrypt.hash(dto.password, 10);
+    const hash = await this.hash(dto.password);
     const checkEmail = await this.adminRepo.findOneBy({ email: dto.email });
     if (checkEmail) {
       throw new BadRequestException('El correo electrónico ya está en uso');
@@ -56,7 +68,7 @@ export class AdminService {
     }
 
     if (dto.password) {
-      dto.password = await bcrypt.hash(dto.password, 10);
+      dto.password = await this.hash(dto.password);
     }
 
     await this.adminRepo.update(id, dto);
@@ -70,7 +82,7 @@ export class AdminService {
         'Correo no encontrado o contraseña incorrecta',
       );
 
-    const match = await bcrypt.compare(dto.password, admin.password);
+    const match = await this.verify(dto.password, admin.password);
     if (!match)
       throw new UnauthorizedException(
         'Correo no encontrado o contraseña incorrecta',
@@ -78,7 +90,7 @@ export class AdminService {
 
     //generate random access code
     const accessCode = randomInt(100000, 900000);
-    admin.accessCode = await bcrypt.hash(accessCode.toString(), 10);
+    admin.accessCode = await this.hash(accessCode.toString());
 
     //set access code expiry (15 minutes)
     admin.accessCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
@@ -105,7 +117,7 @@ export class AdminService {
     if (admin.accessCodeExpiry && admin.accessCodeExpiry < new Date())
       throw new UnauthorizedException('Código de acceso expirado');
 
-    const match = await bcrypt.compare(accessCode, admin.accessCode);
+    const match = await this.verify(accessCode, admin.accessCode);
     if (!match) throw new UnauthorizedException('Código de acceso inválido');
 
     //reset access code
@@ -160,7 +172,7 @@ export class AdminService {
       throw new BadRequestException('Admin no encontrado');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await this.hash(newPassword);
     admin.password = hashedPassword;
     await this.adminRepo.save(admin);
 
