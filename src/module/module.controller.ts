@@ -17,16 +17,26 @@ export class ModuleController {
       return new ResponseDTO(true, "Modulo agregado exitosamente", module)
     } catch (error) {
       return new ResponseDTO(false, error.message)
-
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll() {
     try {
       const modules = await this.moduleService.findAll();
       return new ResponseDTO(true, "Modulos obtenidos correctamente", modules);
 
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
+  @Get('public')
+  async findAllPublic() {
+    try {
+      const modules = await this.moduleService.findAllActive();
+      return new ResponseDTO(true, "Modulos activos obtenidos correctamente", modules);
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }
@@ -39,6 +49,7 @@ export class ModuleController {
       const module = await this.moduleService.findOne(+id);
       if (!module) return new ResponseDTO(false, "No se ha encontrado el modulo");
 
+      return new ResponseDTO(true, "Modulo obtenido correctamente", module);
     } catch (error) {
       return new ResponseDTO(false, error.message)
 
