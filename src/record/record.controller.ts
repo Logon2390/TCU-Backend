@@ -7,10 +7,10 @@ import { ResponseDTO } from '../common/dto/response.dto';
 
 
 @Controller('records')
+@UseGuards(JwtAuthGuard)
 export class RecordController {
   constructor(private readonly recordService: RecordService) { }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() dto: CreateRecordDto) {
     try {
@@ -31,7 +31,6 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -43,7 +42,6 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('user/:document')
   async findByUserDocument(@Param('document') document: string) {
     try {
@@ -54,7 +52,6 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('module/:moduleId')
   async findByModule(@Param('moduleId') moduleId: string) {
     try {
@@ -65,7 +62,6 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     try {
@@ -76,7 +72,6 @@ export class RecordController {
     }
   }
   
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     try {
@@ -87,7 +82,6 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('records/:userId')
   async getRecordsByUser(@Param('userId') userId: number) {
     try {
