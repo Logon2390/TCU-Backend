@@ -8,6 +8,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { ResponseDTO } from '../common/dto/response.dto';
 @Controller('admins')
+@UseGuards(JwtAuthGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }
 
@@ -81,7 +82,6 @@ export class AdminController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   async findAll() {
     try {
 
