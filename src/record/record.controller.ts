@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { RecordService } from './record.service';
 import { CreateRecordDto } from './dto/create-record.dto';
 import { UpdateRecordDto } from './dto/update-record.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ResponseDTO } from '../common/dto/response.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 
 @Controller('records')
@@ -53,9 +54,11 @@ export class RecordController {
   }
 
   @Get('module/:moduleId')
-  async findByModule(@Param('moduleId') moduleId: string) {
+  async findByModule(@Param('moduleId') moduleId: string, @Query() query: PaginationQueryDto) {
     try {
-      const records = await this.recordService.findByModule(+moduleId);
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const records = await this.recordService.findByModulePaginated(+moduleId, page, limit);
       return new ResponseDTO(true, 'Registros del módulo obtenidos exitosamente', records);
     } catch (error) {
       return new ResponseDTO(false, error.message);
@@ -83,9 +86,11 @@ export class RecordController {
   }
 
   @Get('records/:userId')
-  async getRecordsByUser(@Param('userId') userId: number) {
+  async getRecordsByUser(@Param('userId') userId: number, @Query() query: PaginationQueryDto) {
     try {
-      const records = await this.recordService.getRecordsByUser(+userId);
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const records = await this.recordService.getRecordsByUserPaginated(+userId, page, limit);
       return new ResponseDTO(true, 'Registros del usuario obtenidos exitosamente', records);
     } catch (error) {
       return new ResponseDTO(false, error.message);

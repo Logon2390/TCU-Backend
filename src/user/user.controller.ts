@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Response } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Response, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common'; 
 import { ResponseDTO } from '../common/dto/response.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 
 @Controller('users')
@@ -25,9 +26,11 @@ export class UserController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll() {
+  async findAll(@Query() query: PaginationQueryDto) {
     try {
-      const users = await this.userService.findAll();
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const users = await this.userService.findAllPaginated(page, limit);
       return new ResponseDTO(true, "Usuarios obtenidos correctamente", users);
     } catch (error) {
       return new ResponseDTO(false, error.message);

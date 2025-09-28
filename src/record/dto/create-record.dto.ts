@@ -11,7 +11,7 @@ export class CreateRecordDto {
   @Type(() => Number)
   moduleId: number;
 
-  @IsDateString({ strict: true })
+  @IsDateString()
   @Type(() => Date)
   visitedAt: Date;
 }

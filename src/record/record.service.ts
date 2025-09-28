@@ -10,6 +10,7 @@ import { CreateRecordDto } from './dto/create-record.dto';
 import { UpdateRecordDto } from './dto/update-record.dto';
 import { User } from '../user/user.entity';
 import { ModuleEntity } from '../module/module.entity';
+import { PaginatedResponse, buildPaginatedResponse } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class RecordService {
@@ -98,6 +99,18 @@ export class RecordService {
     });
   }
 
+  // Buscar registros por módulo con paginación
+  async findByModulePaginated(moduleId: number, page: number, limit: number): Promise<PaginatedResponse<Record>> {
+    const [items, total] = await this.recordRepo.findAndCount({
+      where: { module: { id: moduleId } },
+      relations: ['user', 'module'],
+      order: { visitedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return buildPaginatedResponse(items, total, page, limit);
+  }
+
   async update(id: number, dto: UpdateRecordDto) {
     const record = await this.recordRepo.findOneBy({ id });
     if (!record) throw new NotFoundException('Registro no encontrado');
@@ -138,12 +151,15 @@ export class RecordService {
     await this.recordRepo.delete(id);
   }
 
-  async getRecordsByUser(userId: number) {
-    const records = await this.recordRepo.find({
+  async getRecordsByUserPaginated(userId: number, page: number, limit: number): Promise<PaginatedResponse<Omit<Record, 'user'>>> {
+    const [itemsWithUser, total] = await this.recordRepo.findAndCount({
       where: { user: { id: userId } },
       relations: ['module'],
       order: { visitedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
-    return records.map(({ user, ...rest }) => rest);
+    const items = itemsWithUser.map(({ user, ...rest }) => rest as Omit<Record, 'user'>);
+    return buildPaginatedResponse(items, total, page, limit);
   }
 }
