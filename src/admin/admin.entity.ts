@@ -20,8 +20,14 @@ export class Admin {
   @Column({ type: 'varchar', length: 256, nullable: true })
   accessCode: string | null;
 
+  @Column({ type: 'varchar', length: 256, nullable: true })
+  verifyCode: string | null;
+
   @Column({ type: 'datetime', nullable: true })
   accessCodeExpiry: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  verifyCodeExpiry: Date | null;
 
   @Column({ type: 'datetime', nullable: true })
   createdAt: Date | null;

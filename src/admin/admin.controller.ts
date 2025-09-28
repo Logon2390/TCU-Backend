@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Res, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Res, BadRequestException, Query } from '@nestjs/common';
 import { Response } from 'express';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -7,15 +7,20 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { ResponseDTO } from '../common/dto/response.dto';
+import { CurrentUser } from 'src/auth/current-user.decorator';
 @Controller('admins')
-@UseGuards(JwtAuthGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }
 
   @Post()
-  async create(@Body() dto: CreateAdminDto) {
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() dto: CreateAdminDto & { code?: string }, @CurrentUser() user: any) {
     try {
+      if (!dto.code) throw new BadRequestException('Código de verificación requerido');
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.verifyCode(user.id, dto.code);
       const admin = await this.adminService.create(dto);
+      await this.adminService.resetVerifyCode(user.id);
       return new ResponseDTO(true, "Admin agregado correctamente", admin);
     } catch (error) {
 
@@ -24,9 +29,14 @@ export class AdminController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
+  @UseGuards(JwtAuthGuard)
+  async update(@Param('id') id: string, @Body() dto: UpdateAdminDto & { code?: string }, @CurrentUser() user: any) {
     try {
+      if (!dto.code) throw new BadRequestException('Código de verificación requerido');
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.verifyCode(user.id, dto.code);
       const admin = await this.adminService.update(+id, dto)
+      await this.adminService.resetVerifyCode(user.id);
       return new ResponseDTO(true, "Admin actualizado correctamente");
     } catch (error) {
 
@@ -81,7 +91,20 @@ export class AdminController {
     }
   }
 
+  @Get('verify')
+  @UseGuards(JwtAuthGuard)
+  async sendVerificationCode(@CurrentUser() user: any) {
+    try {
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.generateAndSendVerifyCode(user.id);
+      return new ResponseDTO(true, "Código de verificación enviado");
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findAll() {
     try {
 
@@ -95,6 +118,7 @@ export class AdminController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id') id: string) {
     try {
       const admin = await this.adminService.findOne(+id);
@@ -105,10 +129,15 @@ export class AdminController {
     }
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
+  @Delete(':id/:code')
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id') id: string, @CurrentUser() user: any, @Param('code') code?: string) {
     try {
+      if (!code) throw new BadRequestException('Código de verificación requerido');
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.verifyCode(user.id, code);
       await this.adminService.remove(+id);
+      await this.adminService.resetVerifyCode(user.id);
       return new ResponseDTO(true, "Admin eliminado correctamente")
 
     } catch (error) {

@@ -32,7 +32,7 @@ export class AdminService {
     return await bcrypt.hash(password + salt, 10);
   }
 
-  private async verify(password: string, hash: string): Promise<boolean> {
+  private async verifyHash(password: string, hash: string): Promise<boolean> {
     const salt = this.configService.get<string>('SALT') || '';
     return await bcrypt.compare(password + salt, hash);
   }
@@ -44,6 +44,8 @@ export class AdminService {
       throw new BadRequestException('El correo electrónico ya está en uso');
     }
 
+    dto.createdAt = new Date();
+    dto.updatedAt = new Date();
     const admin = this.adminRepo.create({ ...dto, password: hash });
     return this.adminRepo.save(admin).then((admin) => this.mapAdmin(admin));
   }
@@ -58,7 +60,7 @@ export class AdminService {
   }
 
   findOne(id: number) {
-    return this.adminRepo.findOneBy({ id });
+    return this.adminRepo.findOneBy({ id }).then(this.mapAdmin);
   }
 
   async update(id: number, dto: UpdateAdminDto) {
@@ -71,6 +73,14 @@ export class AdminService {
       dto.password = await this.hash(dto.password);
     }
 
+    if (dto.email) {
+      const checkEmail = await this.adminRepo.findOneBy({ email: dto.email });
+      if (checkEmail) {
+        throw new BadRequestException('El correo electrónico ya está en uso');
+      }
+    }
+
+    dto.updatedAt = new Date();
     await this.adminRepo.update(id, dto);
     return this.findOne(id).then(this.mapAdmin);
   }
@@ -82,7 +92,7 @@ export class AdminService {
         'Correo no encontrado o contraseña incorrecta',
       );
 
-    const match = await this.verify(dto.password, admin.password);
+    const match = await this.verifyHash(dto.password, admin.password);
     if (!match)
       throw new UnauthorizedException(
         'Correo no encontrado o contraseña incorrecta',
@@ -104,6 +114,43 @@ export class AdminService {
     return true;
   }
 
+  async generateAndSendVerifyCode(adminId: number) {
+    const admin = await this.adminRepo.findOneBy({ id: adminId });
+    if (!admin) throw new NotFoundException('Admin no encontrado');
+
+    const verifyCode = randomInt(100000, 900000);
+    admin.verifyCode = await this.hash(verifyCode.toString());
+    admin.verifyCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    await this.adminRepo.save(admin);
+
+    await this.mailService.sendVerifyCode(admin.email, verifyCode);
+    return true;
+  }
+
+  async verifyCode(adminId: number, code: string) {
+    if (!code)
+      throw new UnauthorizedException('Código de verificación inválido');
+
+    const admin = await this.adminRepo.findOneBy({ id: adminId });
+    if (!admin) throw new NotFoundException('Admin no encontrado');
+    if (!admin.verifyCode)
+      throw new UnauthorizedException('Código de verificación inválido');
+
+    const match = await this.verifyHash(code, admin.verifyCode);
+    if (!match)
+      throw new UnauthorizedException('Código de verificación inválido');
+    return true;
+  }
+
+  async resetVerifyCode(adminId: number) {
+    const admin = await this.adminRepo.findOneBy({ id: adminId });
+    if (!admin) throw new NotFoundException('Admin no encontrado');
+
+    admin.verifyCode = null;
+    admin.verifyCodeExpiry = null;
+    await this.adminRepo.save(admin);
+  }
+
   async verifyAccessCode(email: string, accessCode: string, res: Response) {
     const admin = await this.adminRepo.findOneBy({ email });
     if (!admin)
@@ -117,7 +164,7 @@ export class AdminService {
     if (admin.accessCodeExpiry && admin.accessCodeExpiry < new Date())
       throw new UnauthorizedException('Código de acceso expirado');
 
-    const match = await this.verify(accessCode, admin.accessCode);
+    const match = await this.verifyHash(accessCode, admin.accessCode);
     if (!match) throw new UnauthorizedException('Código de acceso inválido');
 
     //reset access code
@@ -135,7 +182,7 @@ export class AdminService {
       sameSite: 'strict',
       maxAge: 60 * 60 * 1000, // 1 hora
     });
-    
+
     return {
       admin: {
         id: admin.id,
@@ -146,6 +193,11 @@ export class AdminService {
   }
 
   async remove(id: number) {
+    const admin = await this.adminRepo.findOneBy({ id });
+    if (!admin) throw new NotFoundException('Admin no encontrado');
+    if (admin.id === 1)
+      throw new BadRequestException('No se puede eliminar el admin principal');
+
     await this.adminRepo.delete(id);
   }
 
@@ -184,6 +236,8 @@ export class AdminService {
       name: admin.name,
       email: admin.email,
       role: admin.role,
+      createdAt: admin.createdAt,
+      updatedAt: admin.updatedAt,
     };
   }
 }

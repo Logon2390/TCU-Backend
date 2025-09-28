@@ -73,6 +73,30 @@ export class MailService {
     }
   }
 
+  async sendVerifyCode(to: string, verifyCode: number) {
+    try {
+      const html = this.getEmailTemplate(
+        'Código de verificación',
+        'utiliza el siguiente código para verificar tu cuenta:',
+        String(verifyCode),
+        undefined,
+        'Verificar código',
+        '⚠️ Este código expirará en 15 minutos.',
+      );
+
+      await this.transporter.sendMail({
+        from: '"Centro Civico Por la Paz Pococi" <noreply@example.com>',
+        to,
+        subject: 'Código de verificación',
+        html,
+      });
+
+    } catch (error) {
+      console.error('Error enviando email:', error);
+      throw new Error('No se pudo enviar el correo de verificación');
+    }
+  }
+
   private getEmailTemplate(
     title: string,
     message: string,
