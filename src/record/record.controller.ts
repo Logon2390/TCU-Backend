@@ -8,20 +8,20 @@ import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 
 @Controller('records')
-@UseGuards(JwtAuthGuard)
 export class RecordController {
   constructor(private readonly recordService: RecordService) { }
 
   @Post()
   async create(@Body() dto: CreateRecordDto) {
     try {
-      const record = await this.recordService.create(dto);
-      return new ResponseDTO(true, 'Registro creado exitosamente', record);
+      await this.recordService.create(dto);
+      return new ResponseDTO(true, 'Registro creado exitosamente');
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll() {
     try {
@@ -32,6 +32,7 @@ export class RecordController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -43,6 +44,7 @@ export class RecordController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('user/:document')
   async findByUserDocument(@Param('document') document: string) {
     try {
@@ -53,6 +55,7 @@ export class RecordController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('module/:moduleId')
   async findByModule(@Param('moduleId') moduleId: string, @Query() query: PaginationQueryDto) {
     try {
@@ -65,6 +68,7 @@ export class RecordController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     try {
@@ -75,6 +79,7 @@ export class RecordController {
     }
   }
   
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     try {
@@ -85,6 +90,7 @@ export class RecordController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('records/:userId')
   async getRecordsByUser(@Param('userId') userId: number, @Query() query: PaginationQueryDto) {
     try {
