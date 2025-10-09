@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { RecordService } from './record.service';
 import { CreateRecordDto } from './dto/create-record.dto';
 import { UpdateRecordDto } from './dto/update-record.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
 import { ResponseDTO } from '../common/dto/response.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { RequireAdmin, RequireMaster } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 
 @Controller('records')
@@ -15,13 +16,15 @@ export class RecordController {
   @Post()
   async create(@Body() dto: CreateRecordDto) {
     try {
-      const record = await this.recordService.create(dto);
-      return new ResponseDTO(true, 'Registro creado exitosamente', record);
+      await this.recordService.create(dto);
+      return new ResponseDTO(true, 'Registro creado exitosamente');
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get()
   async findAll() {
     try {
@@ -31,7 +34,9 @@ export class RecordController {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -43,7 +48,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get('user/:document')
   async findByUserDocument(@Param('document') document: string) {
     try {
@@ -54,19 +60,23 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get('module/:moduleId')
-  async findByModule(@Param('moduleId') moduleId: string) {
+  async findByModule(@Param('moduleId') moduleId: string, @Query() query: PaginationQueryDto) {
     try {
-      const records = await this.recordService.findByModule(+moduleId);
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const records = await this.recordService.findByModulePaginated(+moduleId, page, limit);
       return new ResponseDTO(true, 'Registros del módulo obtenidos exitosamente', records);
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Patch(':id')
-  @Roles('M')
   async update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     try {
       const record = await this.recordService.update(+id, dto);
@@ -75,13 +85,28 @@ export class RecordController {
       return new ResponseDTO(false, error.message);
     }
   }
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   @Delete(':id')
-  @Roles('M')
   async remove(@Param('id') id: string) {
     try {
       await this.recordService.remove(+id);
       return new ResponseDTO(true, 'Registro eliminado exitosamente');
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
+  @Get('records/:userId')
+  async getRecordsByUser(@Param('userId') userId: number, @Query() query: PaginationQueryDto) {
+    try {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
+      const records = await this.recordService.getRecordsByUserPaginated(+userId, page, limit);
+      return new ResponseDTO(true, 'Registros del usuario obtenidos exitosamente', records);
     } catch (error) {
       return new ResponseDTO(false, error.message);
     }

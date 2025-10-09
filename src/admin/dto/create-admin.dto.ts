@@ -1,4 +1,11 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateAdminDto {
   @IsString()
@@ -17,4 +24,12 @@ export class CreateAdminDto {
   @IsOptional()
   @IsString()
   accessCode: string;
+
+  @IsOptional()
+  @IsDateString()
+  createdAt: Date;
+
+  @IsOptional()
+  @IsDateString()
+  updatedAt: Date;
 }

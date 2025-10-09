@@ -10,6 +10,7 @@ import { CreateRecordDto } from './dto/create-record.dto';
 import { UpdateRecordDto } from './dto/update-record.dto';
 import { User } from '../user/user.entity';
 import { ModuleEntity } from '../module/module.entity';
+import { PaginatedResponse, buildPaginatedResponse } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class RecordService {
@@ -47,6 +48,9 @@ export class RecordService {
       const incomingLastRecord: Date | undefined = (dto.user as any)?.lastRecord
         ? new Date((dto.user as any).lastRecord)
         : undefined;
+      user.name = dto.user.name;
+      user.gender = dto.user.gender;
+      user.birthday = dto.user.birthday ?? new Date();
       user.lastRecord = incomingLastRecord ?? new Date(dto.visitedAt);
       await this.userRepo.save(user);
     }
@@ -98,6 +102,18 @@ export class RecordService {
     });
   }
 
+  // Buscar registros por módulo con paginación
+  async findByModulePaginated(moduleId: number, page: number, limit: number): Promise<PaginatedResponse<Record>> {
+    const [items, total] = await this.recordRepo.findAndCount({
+      where: { module: { id: moduleId } },
+      relations: ['user', 'module'],
+      order: { visitedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return buildPaginatedResponse(items, total, page, limit);
+  }
+
   async update(id: number, dto: UpdateRecordDto) {
     const record = await this.recordRepo.findOneBy({ id });
     if (!record) throw new NotFoundException('Registro no encontrado');
@@ -136,5 +152,17 @@ export class RecordService {
 
   async remove(id: number) {
     await this.recordRepo.delete(id);
+  }
+
+  async getRecordsByUserPaginated(userId: number, page: number, limit: number): Promise<PaginatedResponse<Omit<Record, 'user'>>> {
+    const [itemsWithUser, total] = await this.recordRepo.findAndCount({
+      where: { user: { id: userId } },
+      relations: ['module'],
+      order: { visitedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    const items = itemsWithUser.map(({ user, ...rest }) => rest as Omit<Record, 'user'>);
+    return buildPaginatedResponse(items, total, page, limit);
   }
 }

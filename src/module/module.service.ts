@@ -14,6 +14,8 @@ export class ModuleService {
 
   create(dto: CreateModuleDto) {
     const module = this.moduleRepo.create(dto);
+    module.createdAt = new Date();
+    module.updatedAt = new Date();
     return this.moduleRepo.save(module);
   }
 
@@ -21,11 +23,16 @@ export class ModuleService {
     return this.moduleRepo.find();
   }
 
+  findAllActive() {
+    return this.moduleRepo.find({ where: { isActive: true } });
+  }
+
   findOne(id: number) {
     return this.moduleRepo.findOneBy({ id });
   }
 
   async update(id: number, dto: UpdateModuleDto) {
+    dto.updatedAt = new Date();
     await this.moduleRepo.update(id, dto);
     return this.findOne(id);
   }
