@@ -5,6 +5,8 @@ import { UpdateRecordDto } from './dto/update-record.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ResponseDTO } from '../common/dto/response.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { RequireAdmin, RequireMaster } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 
 @Controller('records')
@@ -21,7 +23,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get()
   async findAll() {
     try {
@@ -32,7 +35,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -44,7 +48,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get('user/:document')
   async findByUserDocument(@Param('document') document: string) {
     try {
@@ -55,7 +60,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get('module/:moduleId')
   async findByModule(@Param('moduleId') moduleId: string, @Query() query: PaginationQueryDto) {
     try {
@@ -68,7 +74,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateRecordDto) {
     try {
@@ -79,7 +86,8 @@ export class RecordController {
     }
   }
   
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   @Delete(':id')
   async remove(@Param('id') id: string) {
     try {
@@ -90,7 +98,8 @@ export class RecordController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get('records/:userId')
   async getRecordsByUser(@Param('userId') userId: number, @Query() query: PaginationQueryDto) {
     try {

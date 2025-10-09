@@ -1,17 +1,16 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
+import { RequireAdmin } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { ResponseDTO } from 'src/common/dto/response.dto';
 
 @Controller('reports')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@RequireAdmin()
 export class ReportsController {
     constructor(private readonly reportsService: ReportsService) { }
 
-    /**
-     * Genera un reporte rápido para el día actual
-     */
     @Get('today')
     async getTodayReport() {
         const today = new Date();
@@ -31,11 +30,7 @@ export class ReportsController {
         }
     }
 
-    /**
-     * Genera un reporte para el mes actual
-     */
     @Get('month')
-    @Roles('admin', 'user')
     async getMonthReport() {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -55,11 +50,7 @@ export class ReportsController {
         }
     }
 
-    /**
-     * Genera un reporte para el año actual
-     */
     @Get('year')
-    @Roles('admin', 'user')
     async getYearReport() {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -74,11 +65,7 @@ export class ReportsController {
         }
     }
 
-    /**
-     * Genera un reporte personalizado por rango de fechas
-     */
     @Get('custom')
-    @Roles('admin', 'user')
     async getCustomReport(
         @Query('startDate') startDate: string,
         @Query('endDate') endDate: string,

@@ -8,12 +8,15 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { ResponseDTO } from '../common/dto/response.dto';
 import { CurrentUser } from 'src/auth/current-user.decorator';
+import { RequireMaster } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 @Controller('admins')
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async create(@Body() dto: CreateAdminDto & { code?: string }, @CurrentUser() user: any) {
     try {
       if (!dto.code) throw new BadRequestException('Código de verificación requerido');
@@ -29,7 +32,8 @@ export class AdminController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async update(@Param('id') id: string, @Body() dto: UpdateAdminDto & { code?: string }, @CurrentUser() user: any) {
     try {
       if (!dto.code) throw new BadRequestException('Código de verificación requerido');
@@ -92,7 +96,8 @@ export class AdminController {
   }
 
   @Get('verify')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async sendVerificationCode(@CurrentUser() user: any) {
     try {
       if (!user?.id) throw new BadRequestException('Usuario no autenticado');
@@ -104,7 +109,8 @@ export class AdminController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async findAll() {
     try {
 
@@ -118,7 +124,8 @@ export class AdminController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async findOne(@Param('id') id: string) {
     try {
       const admin = await this.adminService.findOne(+id);
@@ -130,7 +137,8 @@ export class AdminController {
   }
 
   @Delete(':id/:code')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async remove(@Param('id') id: string, @CurrentUser() user: any, @Param('code') code?: string) {
     try {
       if (!code) throw new BadRequestException('Código de verificación requerido');

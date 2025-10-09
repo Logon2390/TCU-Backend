@@ -6,13 +6,16 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common'; 
 import { ResponseDTO } from '../common/dto/response.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { RequireAdmin, RequireMaster } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Put(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
 
@@ -25,7 +28,8 @@ export class UserController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   async findAll(@Query() query: PaginationQueryDto) {
     try {
       const page = query.page ?? 1;
@@ -37,7 +41,8 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get(':id')
   async findOne(@Param('id') id: string) {
 
@@ -63,7 +68,8 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Post()
   async create(@Body() dto: CreateUserDto) {
     try {
@@ -76,7 +82,8 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async remove(@Param('id') id: string) {
     try {
       await this.userService.remove(+id);
