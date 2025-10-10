@@ -2,12 +2,12 @@ import { Controller, Get, Post, Body, Param, Delete, Put, Response, Query } from
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common'; 
 import { ResponseDTO } from '../common/dto/response.dto';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
-import { RequireAdmin, RequireMaster } from 'src/auth/roles.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
+import { RequireAdmin, RequireMaster } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 
 @Controller('users')
