@@ -3,7 +3,7 @@ import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RequireAdmin } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { ResponseDTO } from 'src/common/dto/response.dto';
+import { ResponseDTO } from '../common/dto/response.dto';
 
 @Controller('reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
