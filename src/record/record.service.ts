@@ -58,11 +58,14 @@ export class RecordService {
       throw new NotFoundException('Módulo no encontrado');
     }
 
-    // Crear el registro
+    const visitedAt = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+    
     const record = this.recordRepo.create({
       user,
       module,
-      visitedAt: new Date(dto.visitedAt),
+      visitedAt,
     });
 
     return this.recordRepo.save(record);

@@ -44,8 +44,12 @@ export class AdminService {
       throw new BadRequestException('El correo electrónico ya está en uso');
     }
 
-    dto.createdAt = new Date();
-    dto.updatedAt = new Date();
+    const date = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+
+    dto.createdAt = date;
+    dto.updatedAt = date;
     const admin = this.adminRepo.create({ ...dto, password: hash });
     return this.adminRepo.save(admin).then((admin) => this.mapAdmin(admin));
   }
@@ -80,7 +84,11 @@ export class AdminService {
       }
     }
 
-    dto.updatedAt = new Date();
+    const updatedAt = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+
+    dto.updatedAt = updatedAt;
     await this.adminRepo.update(id, dto);
     return this.findOne(id).then(this.mapAdmin);
   }
@@ -98,12 +106,16 @@ export class AdminService {
         'Correo no encontrado o contraseña incorrecta',
       );
 
+    const date = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+
     //generate random access code
     const accessCode = randomInt(100000, 900000);
     admin.accessCode = await this.hash(accessCode.toString());
 
     //set access code expiry (15 minutes)
-    admin.accessCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    admin.accessCodeExpiry = new Date(date.getTime() + 15 * 60 * 1000);
 
     //save admin access code
     await this.adminRepo.save(admin);
@@ -118,9 +130,13 @@ export class AdminService {
     const admin = await this.adminRepo.findOneBy({ id: adminId });
     if (!admin) throw new NotFoundException('Admin no encontrado');
 
+    const date = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+
     const verifyCode = randomInt(100000, 900000);
     admin.verifyCode = await this.hash(verifyCode.toString());
-    admin.verifyCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    admin.verifyCodeExpiry = new Date(date.getTime() + 15 * 60 * 1000);
     await this.adminRepo.save(admin);
 
     await this.mailService.sendVerifyCode(admin.email, verifyCode);
