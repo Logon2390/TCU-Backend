@@ -38,6 +38,8 @@ export class AdminService {
   }
 
   async create(dto: CreateAdminDto) {
+    // Remove non-entity props to avoid TypeORM update/create errors
+    if (dto && (dto as any).code !== undefined) delete (dto as any).code;
     const hash = await this.hash(dto.password);
     const checkEmail = await this.adminRepo.findOneBy({ email: dto.email });
     if (checkEmail) {
@@ -68,6 +70,8 @@ export class AdminService {
   }
 
   async update(id: number, dto: UpdateAdminDto) {
+    // Remove non-entity props to avoid TypeORM update errors
+    if (dto && (dto as any).code !== undefined) delete (dto as any).code;
     const admin = await this.adminRepo.findOneBy({ id });
     if (!admin) {
       throw new Error('Admin no encontrado');
