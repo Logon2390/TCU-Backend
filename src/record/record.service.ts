@@ -48,9 +48,6 @@ export class RecordService {
       const incomingLastRecord: Date | undefined = (dto.user as any)?.lastRecord
         ? new Date((dto.user as any).lastRecord)
         : undefined;
-      user.name = dto.user.name;
-      user.gender = dto.user.gender;
-      user.birthday = dto.user.birthday ?? new Date();
       user.lastRecord = incomingLastRecord ?? new Date(dto.visitedAt);
       await this.userRepo.save(user);
     }
