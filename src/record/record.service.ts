@@ -43,13 +43,11 @@ export class RecordService {
       }
 
       user = this.userRepo.create(dto.user);
-      user = await this.userRepo.save(user);
-    } else {
-      // Actualizar el campo lastRecord si visitedAt es más reciente
-
-      user.lastRecord = recordDate;
-      await this.userRepo.save(user);
     }
+
+    // Actualizar el campo lastRecord si visitedAt es más reciente
+    user.lastRecord = recordDate;
+    user = await this.userRepo.save(user);
 
     // Buscar el módulo
     const module = await this.moduleRepo.findOneBy({ id: dto.moduleId });
