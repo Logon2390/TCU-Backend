@@ -10,7 +10,10 @@ import { CreateRecordDto } from './dto/create-record.dto';
 import { UpdateRecordDto } from './dto/update-record.dto';
 import { User } from '../user/user.entity';
 import { ModuleEntity } from '../module/module.entity';
-import { PaginatedResponse, buildPaginatedResponse } from '../common/dto/pagination.dto';
+import {
+  PaginatedResponse,
+  buildPaginatedResponse,
+} from '../common/dto/pagination.dto';
 
 @Injectable()
 export class RecordService {
@@ -26,6 +29,9 @@ export class RecordService {
   async create(dto: CreateRecordDto) {
     // Buscar usuario por documento
     let user = await this.userRepo.findOneBy({ document: dto.user.document });
+    const recordDate = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }),
+    );
 
     // Si el usuario no existe, crearlo
     if (!user) {
@@ -37,18 +43,11 @@ export class RecordService {
       }
 
       user = this.userRepo.create(dto.user);
-      // Si viene lastRecord en el payload del usuario, asegurar que sea Date
-      if (user.lastRecord && typeof (user.lastRecord as any) === 'string') {
-        user.lastRecord = new Date(user.lastRecord as unknown as string);
-      }
       user = await this.userRepo.save(user);
     } else {
-      // Si el usuario existe, actualizar lastRecord
-      // Preferir lastRecord explícito del payload si viene, sino usar dto.date
-      const incomingLastRecord: Date | undefined = (dto.user as any)?.lastRecord
-        ? new Date((dto.user as any).lastRecord)
-        : undefined;
-      user.lastRecord = incomingLastRecord ?? new Date(dto.visitedAt);
+      // Actualizar el campo lastRecord si visitedAt es más reciente
+
+      user.lastRecord = recordDate;
       await this.userRepo.save(user);
     }
 
@@ -58,14 +57,10 @@ export class RecordService {
       throw new NotFoundException('Módulo no encontrado');
     }
 
-    const visitedAt = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
-    );
-    
     const record = this.recordRepo.create({
       user,
       module,
-      visitedAt,
+      visitedAt: recordDate,
     });
 
     return this.recordRepo.save(record);
@@ -103,7 +98,11 @@ export class RecordService {
   }
 
   // Buscar registros por módulo con paginación
-  async findByModulePaginated(moduleId: number, page: number, limit: number): Promise<PaginatedResponse<Record>> {
+  async findByModulePaginated(
+    moduleId: number,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<Record>> {
     const [items, total] = await this.recordRepo.findAndCount({
       where: { module: { id: moduleId } },
       relations: ['user', 'module'],
@@ -154,7 +153,11 @@ export class RecordService {
     await this.recordRepo.delete(id);
   }
 
-  async getRecordsByUserPaginated(userId: number, page: number, limit: number): Promise<PaginatedResponse<Omit<Record, 'user'>>> {
+  async getRecordsByUserPaginated(
+    userId: number,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResponse<Omit<Record, 'user'>>> {
     const [itemsWithUser, total] = await this.recordRepo.findAndCount({
       where: { user: { id: userId } },
       relations: ['module'],
@@ -162,7 +165,9 @@ export class RecordService {
       skip: (page - 1) * limit,
       take: limit,
     });
-    const items = itemsWithUser.map(({ user, ...rest }) => rest as Omit<Record, 'user'>);
+    const items = itemsWithUser.map(
+      ({ user, ...rest }) => rest as Omit<Record, 'user'>,
+    );
     return buildPaginatedResponse(items, total, page, limit);
   }
 }
