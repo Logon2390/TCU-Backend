@@ -14,6 +14,11 @@ export class ModuleService {
 
   create(dto: CreateModuleDto) {
     const module = this.moduleRepo.create(dto);
+    const date = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+    module.createdAt = date;
+    module.updatedAt = date;
     return this.moduleRepo.save(module);
   }
 
@@ -21,11 +26,19 @@ export class ModuleService {
     return this.moduleRepo.find();
   }
 
+  findAllActive() {
+    return this.moduleRepo.find({ where: { isActive: true } });
+  }
+
   findOne(id: number) {
     return this.moduleRepo.findOneBy({ id });
   }
 
   async update(id: number, dto: UpdateModuleDto) {
+    const date = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+    dto.updatedAt = date;
     await this.moduleRepo.update(id, dto);
     return this.findOne(id);
   }

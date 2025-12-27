@@ -3,28 +3,27 @@ import { ModuleService } from './module.service';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
+import { RequireAdmin, RequireMaster } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { ResponseDTO } from '../common/dto/response.dto';
-
-@UseGuards(RolesGuard)
 @Controller('modules')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) { }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Post()
-  @Roles('A', 'M')
   async create(@Body() dto: CreateModuleDto) {
     try {
       const module = await this.moduleService.create(dto);
       return new ResponseDTO(true, "Modulo agregado exitosamente", module)
     } catch (error) {
       return new ResponseDTO(false, error.message)
-
     }
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get()
   async findAll() {
     try {
@@ -36,21 +35,33 @@ export class ModuleController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Get('public')
+  async findAllPublic() {
+    try {
+      const modules = await this.moduleService.findAllActive();
+      return new ResponseDTO(true, "Modulos activos obtenidos correctamente", modules);
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
       const module = await this.moduleService.findOne(+id);
       if (!module) return new ResponseDTO(false, "No se ha encontrado el modulo");
 
+      return new ResponseDTO(true, "Modulo obtenido correctamente", module);
     } catch (error) {
       return new ResponseDTO(false, error.message)
 
     }
   }
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireAdmin()
   @Patch(':id')
-  @Roles('M')
   async update(@Param('id') id: string, @Body() dto: UpdateModuleDto) {
     try {
       const module = await this.moduleService.update(+id, dto);
@@ -62,9 +73,9 @@ export class ModuleController {
     }
   }
   
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   @Delete(':id')
-  @Roles('M')
   async remove(@Param('id') id: string) {
     try {
       await this.moduleService.remove(+id);

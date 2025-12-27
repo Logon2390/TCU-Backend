@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PaginatedResponse, buildPaginatedResponse } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class UserService {
@@ -11,8 +12,13 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAllPaginated(page: number, limit: number): Promise<PaginatedResponse<User>> {
+    const [items, total] = await this.userRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'ASC' },
+    });
+    return buildPaginatedResponse(items, total, page, limit);
   }
 
   async findOne(id: number): Promise<User> {

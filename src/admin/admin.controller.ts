@@ -1,22 +1,29 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, Res, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Res, BadRequestException, Query } from '@nestjs/common';
 import { Response } from 'express';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/auth/roles.decorator';
 import { ResponseDTO } from '../common/dto/response.dto';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { RequireMaster } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 @Controller('admins')
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }
 
   @Post()
-  async create(@Body() dto: CreateAdminDto) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
+  async create(@Body() dto: CreateAdminDto & { code?: string }, @CurrentUser() user: any) {
     try {
+      if (!dto.code) throw new BadRequestException('Código de verificación requerido');
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.verifyCode(user.id, dto.code);
       const admin = await this.adminService.create(dto);
+      await this.adminService.resetVerifyCode(user.id);
       return new ResponseDTO(true, "Admin agregado correctamente", admin);
     } catch (error) {
 
@@ -25,9 +32,15 @@ export class AdminController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
+  async update(@Param('id') id: string, @Body() dto: UpdateAdminDto & { code?: string }, @CurrentUser() user: any) {
     try {
+      if (!dto.code) throw new BadRequestException('Código de verificación requerido');
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.verifyCode(user.id, dto.code);
       const admin = await this.adminService.update(+id, dto)
+      await this.adminService.resetVerifyCode(user.id);
       return new ResponseDTO(true, "Admin actualizado correctamente");
     } catch (error) {
 
@@ -82,9 +95,22 @@ export class AdminController {
     }
   }
 
+  @Get('verify')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
+  async sendVerificationCode(@CurrentUser() user: any) {
+    try {
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.generateAndSendVerifyCode(user.id);
+      return new ResponseDTO(true, "Código de verificación enviado");
+    } catch (error) {
+      return new ResponseDTO(false, error.message);
+    }
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('M')
+  @RequireMaster()
   async findAll() {
     try {
 
@@ -98,6 +124,8 @@ export class AdminController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
   async findOne(@Param('id') id: string) {
     try {
       const admin = await this.adminService.findOne(+id);
@@ -108,10 +136,16 @@ export class AdminController {
     }
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
+  @Delete(':id/:code')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireMaster()
+  async remove(@Param('id') id: string, @CurrentUser() user: any, @Param('code') code?: string) {
     try {
+      if (!code) throw new BadRequestException('Código de verificación requerido');
+      if (!user?.id) throw new BadRequestException('Usuario no autenticado');
+      await this.adminService.verifyCode(user.id, code);
       await this.adminService.remove(+id);
+      await this.adminService.resetVerifyCode(user.id);
       return new ResponseDTO(true, "Admin eliminado correctamente")
 
     } catch (error) {

@@ -1,4 +1,4 @@
-import { IsDateString, IsNumber, ValidateNested } from 'class-validator';
+import { IsDateString, IsNumber, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateUserDto } from '../../user/dto/create-user.dto';
 
@@ -11,7 +11,8 @@ export class CreateRecordDto {
   @Type(() => Number)
   moduleId: number;
 
-  @IsDateString({ strict: true })
+  @IsOptional()
+  @IsDateString()
   @Type(() => Date)
   visitedAt: Date;
 }
