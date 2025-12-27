@@ -4,12 +4,12 @@ import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { ResponseDTO } from '../common/dto/response.dto';
-import { CurrentUser } from 'src/auth/current-user.decorator';
-import { RequireMaster } from 'src/auth/roles.decorator';
-import { RolesGuard } from 'src/auth/roles.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { RequireMaster } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 @Controller('admins')
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }

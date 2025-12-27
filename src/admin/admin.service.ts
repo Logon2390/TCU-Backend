@@ -38,14 +38,20 @@ export class AdminService {
   }
 
   async create(dto: CreateAdminDto) {
+    // Remove non-entity props to avoid TypeORM update/create errors
+    if (dto && (dto as any).code !== undefined) delete (dto as any).code;
     const hash = await this.hash(dto.password);
     const checkEmail = await this.adminRepo.findOneBy({ email: dto.email });
     if (checkEmail) {
       throw new BadRequestException('El correo electrónico ya está en uso');
     }
 
-    dto.createdAt = new Date();
-    dto.updatedAt = new Date();
+    const date = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+
+    dto.createdAt = date;
+    dto.updatedAt = date;
     const admin = this.adminRepo.create({ ...dto, password: hash });
     return this.adminRepo.save(admin).then((admin) => this.mapAdmin(admin));
   }
@@ -64,6 +70,8 @@ export class AdminService {
   }
 
   async update(id: number, dto: UpdateAdminDto) {
+    // Remove non-entity props to avoid TypeORM update errors
+    if (dto && (dto as any).code !== undefined) delete (dto as any).code;
     const admin = await this.adminRepo.findOneBy({ id });
     if (!admin) {
       throw new Error('Admin no encontrado');
@@ -74,13 +82,17 @@ export class AdminService {
     }
 
     if (dto.email) {
-      const checkEmail = await this.adminRepo.findOneBy({ email: dto.email });
-      if (checkEmail) {
+      const admin = await this.adminRepo.findOneBy({ email: dto.email });
+      if (admin && admin.id !== id) {
         throw new BadRequestException('El correo electrónico ya está en uso');
       }
     }
 
-    dto.updatedAt = new Date();
+    const updatedAt = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
+    );
+
+    dto.updatedAt = updatedAt;
     await this.adminRepo.update(id, dto);
     return this.findOne(id).then(this.mapAdmin);
   }
@@ -97,6 +109,7 @@ export class AdminService {
       throw new UnauthorizedException(
         'Correo no encontrado o contraseña incorrecta',
       );
+
 
     //generate random access code
     const accessCode = randomInt(100000, 900000);
@@ -179,7 +192,7 @@ export class AdminService {
     res.cookie('token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       maxAge: 60 * 60 * 1000, // 1 hora
     });
 

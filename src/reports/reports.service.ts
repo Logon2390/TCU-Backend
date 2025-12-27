@@ -74,7 +74,19 @@ export class ReportsService {
             baseQuery = baseQuery.andWhere('module.id = :moduleId', { moduleId: dto.moduleId });
         }
 
-        // Agregaciones principales
+        // Obtener rangos etarios desde variables de entorno
+        const INFANCIA_MAX = parseInt(process.env.INFANCIA_MAX || '9');
+        const PREADOLESCENCIA_MIN = parseInt(process.env.PREADOLESCENCIA_MIN || '10');
+        const PREADOLESCENCIA_MAX = parseInt(process.env.PREADOLESCENCIA_MAX || '12');
+        const ADOLESCENCIA_MIN = parseInt(process.env.ADOLESCENCIA_MIN || '13');
+        const ADOLESCENCIA_MAX = parseInt(process.env.ADOLESCENCIA_MAX || '17');
+        const ADULTEZ_JOVEN_MIN = parseInt(process.env.ADULTEZ_JOVEN_MIN || '18');
+        const ADULTEZ_JOVEN_MAX = parseInt(process.env.ADULTEZ_JOVEN_MAX || '35');
+        const ADULTEZ_MIN = parseInt(process.env.ADULTEZ_MIN || '36');
+        const ADULTEZ_MAX = parseInt(process.env.ADULTEZ_MAX || '64');
+        const VEJEZ_MIN = parseInt(process.env.VEJEZ_MIN || '65');
+
+        // Agregaciones principales usando los valores configurables
         const aggregatedStats = await baseQuery
             .select([
                 'COUNT(*) as totalVisits',
@@ -83,11 +95,12 @@ export class ReportsService {
                 "SUM(CASE WHEN user.gender = 'F' THEN 1 ELSE 0 END) as fCount",
                 "SUM(CASE WHEN user.gender = 'M' THEN 1 ELSE 0 END) as mCount",
                 "SUM(CASE WHEN user.gender = 'O' THEN 1 ELSE 0 END) as oCount",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) <= 14 THEN 1 ELSE 0 END) as infancia",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 15 AND 24 THEN 1 ELSE 0 END) as juventud",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 25 AND 44 THEN 1 ELSE 0 END) as adultez_joven",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN 45 AND 64 THEN 1 ELSE 0 END) as adultez_media",
-                "SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) >= 65 THEN 1 ELSE 0 END) as vejez",
+                `SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) <= ${INFANCIA_MAX} THEN 1 ELSE 0 END) as infancia`,
+                `SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN ${PREADOLESCENCIA_MIN} AND ${PREADOLESCENCIA_MAX} THEN 1 ELSE 0 END) as preadolescencia`,
+                `SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN ${ADOLESCENCIA_MIN} AND ${ADOLESCENCIA_MAX} THEN 1 ELSE 0 END) as adolescencia`,
+                `SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN ${ADULTEZ_JOVEN_MIN} AND ${ADULTEZ_JOVEN_MAX} THEN 1 ELSE 0 END) as adultez_joven`,
+                `SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) BETWEEN ${ADULTEZ_MIN} AND ${ADULTEZ_MAX} THEN 1 ELSE 0 END) as adultez_media`,
+                `SUM(CASE WHEN user.birthday IS NOT NULL AND TIMESTAMPDIFF(YEAR, user.birthday, record.visitedAt) >= ${VEJEZ_MIN} THEN 1 ELSE 0 END) as vejez`,
             ])
             .getRawOne();
 
@@ -107,7 +120,8 @@ export class ReportsService {
             },
             ageRangeDistribution: {
                 infancia: parseInt(aggregatedStats.infancia || '0'),
-                juventud: parseInt(aggregatedStats.juventud || '0'),
+                preadolescencia: parseInt(aggregatedStats.preadolescencia || '0'),
+                adolescencia: parseInt(aggregatedStats.adolescencia || '0'),
                 adultez_joven: parseInt(aggregatedStats.adultez_joven || '0'),
                 adultez_media: parseInt(aggregatedStats.adultez_media || '0'),
                 vejez: parseInt(aggregatedStats.vejez || '0')
@@ -125,19 +139,34 @@ export class ReportsService {
      * Obtiene el rango de edad para un rango etario específico
      */
     private getAgeRange(ageRange: string): { minAge: number; maxAge: number } {
+        // Obtener rangos etarios desde variables de entorno
+        const INFANCIA_MAX = parseInt(process.env.INFANCIA_MAX || '9');
+        const PREADOLESCENCIA_MIN = parseInt(process.env.PREADOLESCENCIA_MIN || '10');
+        const PREADOLESCENCIA_MAX = parseInt(process.env.PREADOLESCENCIA_MAX || '12');
+        const ADOLESCENCIA_MIN = parseInt(process.env.ADOLESCENCIA_MIN || '13');
+        const ADOLESCENCIA_MAX = parseInt(process.env.ADOLESCENCIA_MAX || '17');
+        const ADULTEZ_JOVEN_MIN = parseInt(process.env.ADULTEZ_JOVEN_MIN || '18');
+        const ADULTEZ_JOVEN_MAX = parseInt(process.env.ADULTEZ_JOVEN_MAX || '35');
+        const ADULTEZ_MIN = parseInt(process.env.ADULTEZ_MIN || '36');
+        const ADULTEZ_MAX = parseInt(process.env.ADULTEZ_MAX || '64');
+        const VEJEZ_MIN = parseInt(process.env.VEJEZ_MIN || '65');
+        const VEJEZ_MAX = 120;
+
         switch (ageRange) {
             case 'infancia':
-                return { minAge: 0, maxAge: 14 };
-            case 'juventud':
-                return { minAge: 15, maxAge: 24 };
+                return { minAge: 0, maxAge: INFANCIA_MAX };
+            case 'preadolescencia':
+                return { minAge: PREADOLESCENCIA_MIN, maxAge: PREADOLESCENCIA_MAX };
+            case 'adolescencia':
+                return { minAge: ADOLESCENCIA_MIN, maxAge: ADOLESCENCIA_MAX };
             case 'adultez_joven':
-                return { minAge: 25, maxAge: 44 };
+                return { minAge: ADULTEZ_JOVEN_MIN, maxAge: ADULTEZ_JOVEN_MAX };
             case 'adultez_media':
-                return { minAge: 45, maxAge: 64 };
+                return { minAge: ADULTEZ_MIN, maxAge: ADULTEZ_MAX };
             case 'vejez':
-                return { minAge: 65, maxAge: 120 };
+                return { minAge: VEJEZ_MIN, maxAge: VEJEZ_MAX };
             default:
-                return { minAge: 0, maxAge: 120 };
+                return { minAge: 0, maxAge: VEJEZ_MAX };
         }
     }
 
