@@ -14,9 +14,7 @@ export class ModuleService {
 
   create(dto: CreateModuleDto) {
     const module = this.moduleRepo.create(dto);
-    const date = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
-    );
+    const date = new Date();
     module.createdAt = date;
     module.updatedAt = date;
     return this.moduleRepo.save(module);
@@ -35,9 +33,7 @@ export class ModuleService {
   }
 
   async update(id: number, dto: UpdateModuleDto) {
-    const date = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
-    );
+    const date = new Date();
     dto.updatedAt = date;
     await this.moduleRepo.update(id, dto);
     return this.findOne(id);
