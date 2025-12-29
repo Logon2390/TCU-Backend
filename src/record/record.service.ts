@@ -29,9 +29,7 @@ export class RecordService {
   async create(dto: CreateRecordDto) {
     // Buscar usuario por documento
     let user = await this.userRepo.findOneBy({ document: dto.user.document });
-    const recordDate = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' }),
-    );
+    const recordDate = new Date();
 
     // Si el usuario no existe, crearlo
     if (!user) {

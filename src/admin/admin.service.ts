@@ -46,9 +46,7 @@ export class AdminService {
       throw new BadRequestException('El correo electrónico ya está en uso');
     }
 
-    const date = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
-    );
+    const date = new Date();
 
     dto.createdAt = date;
     dto.updatedAt = date;
@@ -88,9 +86,7 @@ export class AdminService {
       }
     }
 
-    const updatedAt = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'America/Costa_Rica' })
-    );
+    const updatedAt = new Date();
 
     dto.updatedAt = updatedAt;
     await this.adminRepo.update(id, dto);

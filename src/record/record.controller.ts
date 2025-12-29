@@ -65,8 +65,8 @@ export class RecordController {
   @Get('module/:moduleId')
   async findByModule(@Param('moduleId') moduleId: string, @Query() query: PaginationQueryDto) {
     try {
-      const page = query.page ?? 1;
-      const limit = query.limit ?? 10;
+      const page = Number(query.page) || 1;
+      const limit = Number(query.limit) || 10;
       const records = await this.recordService.findByModulePaginated(+moduleId, page, limit);
       return new ResponseDTO(true, 'Registros del módulo obtenidos exitosamente', records);
     } catch (error) {
@@ -103,8 +103,8 @@ export class RecordController {
   @Get('records/:userId')
   async getRecordsByUser(@Param('userId') userId: number, @Query() query: PaginationQueryDto) {
     try {
-      const page = query.page ?? 1;
-      const limit = query.limit ?? 10;
+      const page = Number(query.page) || 1;
+      const limit = Number(query.limit) || 10;
       const records = await this.recordService.getRecordsByUserPaginated(+userId, page, limit);
       return new ResponseDTO(true, 'Registros del usuario obtenidos exitosamente', records);
     } catch (error) {
