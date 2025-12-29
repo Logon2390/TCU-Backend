@@ -32,8 +32,8 @@ export class UserController {
   @RequireAdmin()
   async findAll(@Query() query: PaginationQueryDto) {
     try {
-      const page = query.page ?? 1;
-      const limit = query.limit ?? 10;
+      const page = Number(query.page) || 1;
+      const limit = Number(query.limit) || 10;
       const users = await this.userService.findAllPaginated(page, limit);
       return new ResponseDTO(true, "Usuarios obtenidos correctamente", users);
     } catch (error) {
