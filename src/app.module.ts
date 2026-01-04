@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 import { ModuleModule } from './module/module.module';
 import { RecordModule } from './record/record.module';
 import { ReportsModule } from './reports/reports.module';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -41,9 +42,11 @@ import { ReportsModule } from './reports/reports.module';
     RecordModule,
     ReportsModule,
   ],
-   providers: [
-    
-    
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
